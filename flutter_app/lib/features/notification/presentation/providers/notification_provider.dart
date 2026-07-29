@@ -5,25 +5,34 @@ import '../../data/notification_service.dart';
 class NotificationCenterState {
   final List<Map<String, dynamic>> notifications;
   final int unreadCount;
+  final int clearedBaseline;
   final bool isLoading;
   final bool systemPermissionGranted;
 
   const NotificationCenterState({
     this.notifications = const [],
     this.unreadCount = 0,
+    this.clearedBaseline = 0,
     this.isLoading = false,
     this.systemPermissionGranted = true,
   });
 
+  /// Badge shown on the Alerts tab. Once the tab is opened we
+  /// acknowledge the current count — the badge stays hidden until
+  /// NEW notifications arrive on top of the acknowledged baseline.
+  int get badgeCount => (unreadCount - clearedBaseline).clamp(0, 999);
+
   NotificationCenterState copyWith({
     List<Map<String, dynamic>>? notifications,
     int? unreadCount,
+    int? clearedBaseline,
     bool? isLoading,
     bool? systemPermissionGranted,
   }) {
     return NotificationCenterState(
       notifications: notifications ?? this.notifications,
       unreadCount: unreadCount ?? this.unreadCount,
+      clearedBaseline: clearedBaseline ?? this.clearedBaseline,
       isLoading: isLoading ?? this.isLoading,
       systemPermissionGranted:
           systemPermissionGranted ?? this.systemPermissionGranted,
@@ -54,7 +63,17 @@ class NotificationCenter extends StateNotifier<NotificationCenterState> {
 
   Future<void> refreshBadgeOnly() async {
     final unread = await _service.fetchUnreadCount();
-    state = state.copyWith(unreadCount: unread);
+    // If the unread total dropped below the acknowledged baseline
+    // (e.g. read on another device), lower the baseline with it.
+    final baseline = state.clearedBaseline > unread ? unread : state.clearedBaseline;
+    state = state.copyWith(unreadCount: unread, clearedBaseline: baseline);
+  }
+
+  /// Hide the tab badge until something new arrives. Called when the
+  /// Alerts tab / notifications page is opened.
+  void acknowledge() {
+    if (state.clearedBaseline == state.unreadCount) return;
+    state = state.copyWith(clearedBaseline: state.unreadCount);
   }
 
   Future<void> markAsRead(String id) async {
@@ -75,6 +94,7 @@ class NotificationCenter extends StateNotifier<NotificationCenterState> {
     await _service.markAllAsRead();
     state = state.copyWith(
       unreadCount: 0,
+      clearedBaseline: 0,
       notifications:
           state.notifications.map((n) => {...n, 'isRead': true}).toList(),
     );

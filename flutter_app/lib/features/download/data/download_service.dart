@@ -321,6 +321,39 @@ class DownloadService {
     }
   }
 
+  /// Pause an in-progress download (keeps the partial file on disk).
+  Future<void> pauseTask(String taskId) async {
+    try {
+      await FlutterDownloader.pause(taskId: taskId);
+    } catch (_) {}
+    final record = _downloadsBox.get(taskId);
+    if (record is Map) {
+      final updated = Map<String, dynamic>.from(record);
+      updated['status'] = 'paused';
+      await _downloadsBox.put(taskId, updated);
+    }
+  }
+
+  /// Resume a paused download. flutter_downloader creates a NEW task id
+  /// on resume, so the Hive record is moved over to it.
+  Future<String?> resumeTask(String taskId) async {
+    String? newId;
+    try {
+      newId = await FlutterDownloader.resume(taskId: taskId);
+    } catch (_) {}
+    if (newId == null) return null;
+
+    final record = _downloadsBox.get(taskId);
+    if (record is Map) {
+      final updated = Map<String, dynamic>.from(record);
+      updated['taskId'] = newId;
+      updated['status'] = 'enqueued';
+      await _downloadsBox.delete(taskId);
+      await _downloadsBox.put(newId, updated);
+    }
+    return newId;
+  }
+
   Future<void> retryTask(String taskId) async {
     String? newId;
     try {

@@ -159,10 +159,17 @@ class _ReleaseCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Rating badge
+                    // Status tag — Ongoing / Completed
                     Positioned(
                       top: 6,
                       left: 6,
+                      child: _StatusPill(status: anime['status'] as String),
+                    ),
+
+                    // Episode count chip
+                    Positioned(
+                      bottom: 6,
+                      right: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 3),
@@ -171,21 +178,14 @@ class _ReleaseCard extends StatelessWidget {
                           borderRadius:
                               BorderRadius.circular(AppTheme.radiusSmall),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star_rounded,
-                                color: AppTheme.warningColor, size: 12),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${anime['rating']}',
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          'EP ${anime['episodes']}',
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -197,7 +197,7 @@ class _ReleaseCard extends StatelessWidget {
 
           const SizedBox(height: 7),
 
-          // Title + status
+          // Title only — status + episode count live on the poster
           Text(
             anime['title'] as String,
             style: const TextStyle(
@@ -209,14 +209,45 @@ class _ReleaseCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
-          Text(
-            'Ep ${anime['episodes']} · ${anime['status']}',
-            style: const TextStyle(fontSize: 10.5, color: AppTheme.textHint),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        ],
+      ),
+    );
+  }
+}
+
+/// Solid status tag — ember for Ongoing, green for Completed.
+class _StatusPill extends StatelessWidget {
+  final String status;
+
+  const _StatusPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isOngoing = status.toLowerCase() == 'ongoing';
+    final color =
+        isOngoing ? AppTheme.primaryColor : const Color(0xFF3ECF8E);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.35),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 8.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.8,
+          color: Colors.white,
+        ),
       ),
     );
   }

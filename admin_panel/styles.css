@@ -341,3 +341,85 @@ label { display: block; font-size: 12.5px; color: var(--text-2); margin: 14px 0 
   .sidebar { max-height: 420px; }
   .stats { display: none; }
 }
+
+/* ── Premium codes modal ───────────────────────── */
+.generate-box {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  flex-wrap: wrap;
+}
+.generate-field { display: flex; flex-direction: column; gap: 6px; }
+.generate-field.grow { flex: 1; min-width: 160px; }
+.generate-field label { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.generate-field input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 9px 12px;
+  font-size: 13.5px;
+  outline: none;
+  min-width: 90px;
+}
+.generate-field input:focus { border-color: var(--accent); }
+
+.codes-table { width: 100%; border-collapse: collapse; }
+.codes-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.codes-table td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  vertical-align: middle;
+}
+.code-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.code-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.code-status.unused { background: rgba(62, 207, 142, 0.14); color: #3ecf8e; }
+.code-status.used { background: rgba(255, 255, 255, 0.07); color: var(--muted); }
+.code-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.icon-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.icon-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+.icon-btn.danger:hover { border-color: rgba(241, 72, 91, 0.6); color: #f1485b; }

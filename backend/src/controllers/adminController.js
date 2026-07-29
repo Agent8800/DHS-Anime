@@ -8,6 +8,8 @@ const Report = require('../models/Report');
 const WatchHistory = require('../models/WatchHistory');
 const Download = require('../models/Download');
 const AppSettings = require('../models/AppSettings');
+const PremiumCode = require('../models/PremiumCode');
+const crypto = require('crypto');
 const notificationService = require('../services/notificationService');
 const axios = require('axios');
 
@@ -1074,6 +1076,110 @@ const getSettings = async (req, res) => {
   }
 };
 
+/**
+ * Generate a batch of premium activation codes (dev shares these with
+ * users; a code is redeemed once in the app and extends premium).
+ */
+const generatePremiumCodes = async (req, res) => {
+  try {
+    const count = Math.min(Math.max(parseInt(req.body.count, 10) || 1, 1), 50);
+    const durationDays = Math.min(Math.max(parseInt(req.body.durationDays, 10) || 30, 1), 3650);
+    const note = (req.body.note || '').toString().slice(0, 120);
+
+    const segment = () => crypto.randomBytes(3).toString('hex').toUpperCase();
+    const created = [];
+    let guard = 0;
+    while (created.length < count && guard < count * 5) {
+      guard += 1;
+      const code = `DHS-${segment()}-${segment()}`;
+      try {
+        // Sequential insert so a rare duplicate-key collision just retries
+        // eslint-disable-next-line no-await-in-loop
+        const doc = await PremiumCode.create({
+          code,
+          durationDays,
+          note,
+          createdBy: req.user?.email || 'admin'
+        });
+        created.push(doc);
+      } catch (err) {
+        if (err.code !== 11000) throw err;
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      data: {
+        count: created.length,
+        codes: created
+      }
+    });
+  } catch (error) {
+    console.error('Generate premium codes error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate codes'
+    });
+  }
+};
+
+/**
+ * Latest codes with redemption status (admin panel table).
+ */
+const listPremiumCodes = async (req, res) => {
+  try {
+    const codes = await PremiumCode.find()
+      .populate('usedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: { codes }
+    });
+  } catch (error) {
+    console.error('List premium codes error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to list codes'
+    });
+  }
+};
+
+/**
+ * Delete an unused code. Redeemed codes are kept for the audit trail.
+ */
+const deletePremiumCode = async (req, res) => {
+  try {
+    const code = await PremiumCode.findById(req.params.id);
+    if (!code) {
+      return res.status(404).json({
+        success: false,
+        message: 'Code not found'
+      });
+    }
+    if (code.isUsed) {
+      return res.status(400).json({
+        success: false,
+        message: 'Code already redeemed — cannot delete'
+      });
+    }
+    await code.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Code deleted'
+    });
+  } catch (error) {
+    console.error('Delete premium code error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete code'
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
   fetchMetadata,
@@ -1090,6 +1196,9 @@ module.exports = {
   moveEpisodes,
   managePremium,
   revokePremium,
+  generatePremiumCodes,
+  listPremiumCodes,
+  deletePremiumCode,
   createAnnouncement,
   getAnnouncements,
   updateAnnouncement,

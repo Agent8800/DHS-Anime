@@ -33,6 +33,11 @@ router.post('/episodes/move', adminController.moveEpisodes);
 router.post('/premium/grant', adminController.managePremium);
 router.put('/premium/revoke/:userId', adminController.revokePremium);
 
+// Premium activation codes (dev generates → users redeem in-app)
+router.get('/premium-codes', adminController.listPremiumCodes);
+router.post('/premium-codes/generate', adminController.generatePremiumCodes);
+router.delete('/premium-codes/:id', adminController.deletePremiumCode);
+
 // Announcements
 router.get('/announcements', adminController.getAnnouncements);
 router.post('/announcements', adminController.createAnnouncement);

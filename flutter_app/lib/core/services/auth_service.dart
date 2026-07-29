@@ -143,6 +143,19 @@ class AuthService extends StateNotifier<AuthState> {
     await _settingsBox.put(AppConstants.userEmailKey, email);
     await _settingsBox.put(AppConstants.userAvatarKey, avatar);
 
+    // Persist premium status (drives "skip shortener" UX + Account page)
+    final syncedUser = data['user'];
+    if (syncedUser is Map) {
+      await _settingsBox.put(
+        AppConstants.userIsPremiumKey,
+        syncedUser['isPremium'] == true,
+      );
+      await _settingsBox.put(
+        AppConstants.userPremiumExpiryKey,
+        syncedUser['premiumExpiry']?.toString() ?? '',
+      );
+    }
+
     state = AuthState(
       isSignedIn: true,
       clerkId: clerkId,
@@ -167,6 +180,8 @@ class AuthService extends StateNotifier<AuthState> {
     await _settingsBox.delete(AppConstants.userNameKey);
     await _settingsBox.delete(AppConstants.userEmailKey);
     await _settingsBox.delete(AppConstants.userAvatarKey);
+    await _settingsBox.delete(AppConstants.userIsPremiumKey);
+    await _settingsBox.delete(AppConstants.userPremiumExpiryKey);
 
     state = const AuthState();
   }

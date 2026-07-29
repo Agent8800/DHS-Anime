@@ -312,8 +312,17 @@ class _DownloadsPageState extends ConsumerState<DownloadsPage>
             ),
             const SizedBox(height: 10),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Icon(
+                  isPaused
+                      ? Icons.pause_circle_outline_rounded
+                      : Icons.downloading_rounded,
+                  size: 15,
+                  color: isPaused
+                      ? AppTheme.warningColor
+                      : AppTheme.primaryColor,
+                ),
+                const SizedBox(width: 6),
                 Text(
                   isPaused ? 'Paused' : 'Downloading…',
                   style: const TextStyle(
@@ -321,17 +330,38 @@ class _DownloadsPageState extends ConsumerState<DownloadsPage>
                     color: AppTheme.textSecondary,
                   ),
                 ),
-                TextButton.icon(
+                const Spacer(),
+
+                // Pause / Resume
+                _actionButton(
+                  icon: isPaused
+                      ? Icons.play_arrow_rounded
+                      : Icons.pause_rounded,
+                  tooltip: isPaused ? 'Resume' : 'Pause',
+                  color: AppTheme.primaryColor,
+                  onPressed: () async {
+                    final service = ref.read(downloadServiceProvider);
+                    if (isPaused) {
+                      await service.resumeTask(record['taskId'].toString());
+                    } else {
+                      await service.pauseTask(record['taskId'].toString());
+                    }
+                    await _refresh();
+                  },
+                ),
+                const SizedBox(width: 8),
+
+                // Cancel
+                _actionButton(
+                  icon: Icons.close_rounded,
+                  tooltip: 'Cancel',
+                  color: AppTheme.errorColor,
                   onPressed: () async {
                     await ref
                         .read(downloadServiceProvider)
                         .cancelTask(record['taskId'].toString());
                     await _refresh();
                   },
-                  icon: const Icon(Icons.cancel_outlined,
-                      size: 18, color: AppTheme.errorColor),
-                  label: const Text('Cancel',
-                      style: TextStyle(color: AppTheme.errorColor)),
                 ),
               ],
             ),
@@ -344,6 +374,30 @@ class _DownloadsPageState extends ConsumerState<DownloadsPage>
           duration: const Duration(milliseconds: 400),
           delay: Duration(milliseconds: index * 80),
         );
+  }
+
+  /// Small circular action used for pause / resume / cancel.
+  Widget _actionButton({
+    required IconData icon,
+    required String tooltip,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: color.withOpacity(0.12),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(icon, size: 19, color: color),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildCompletedTile(Map<String, dynamic> record, int index) {

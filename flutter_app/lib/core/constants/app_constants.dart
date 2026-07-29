@@ -16,6 +16,8 @@ class AppConstants {
   static const String userNameKey = 'user_name';
   static const String userEmailKey = 'user_email';
   static const String userAvatarKey = 'user_avatar';
+  static const String userIsPremiumKey = 'user_is_premium';
+  static const String userPremiumExpiryKey = 'user_premium_expiry';
   static const String themeKey = 'theme_mode';
   static const String primaryColorKey = 'primary_color';
   static const String amoledModeKey = 'amoled_mode';

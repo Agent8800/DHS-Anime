@@ -32,6 +32,7 @@ const state = {
   search: '',
   editingEpisode: null,   // episode whose links are being edited
   draftLinks: [],         // working copy inside the editor
+  premiumCodes: [],       // generated premium activation codes
 };
 
 const $ = id => document.getElementById(id);
@@ -146,6 +147,7 @@ function parsePastedLinks(text) {
 function saveDemo() {
   localStorage.setItem(LS_DEMO, JSON.stringify({
     anime: state.anime,
+    premiumCodes: state.premiumCodes,
     episodesByAnime: state.anime.reduce((acc, a) => {
       acc[a._id] = state.episodesByAnime[a._id] || [];
       return acc;
@@ -160,6 +162,7 @@ function seedDemo() {
       const data = JSON.parse(saved);
       state.anime = data.anime || [];
       state.episodesByAnime = data.episodesByAnime || {};
+      state.premiumCodes = data.premiumCodes || [];
       return;
     } catch (e) { /* reseed below */ }
   }
@@ -531,6 +534,120 @@ function closeModals() {
   document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden'));
 }
 
+// ── Premium activation codes ──────────────────────────────────────
+// The dev generates batches here and shares them with users; each code
+// redeems once in the app (Account → Activate with Code). Free users
+// keep solving the shortener; premium users skip it.
+
+function randomDemoCode() {
+  const seg = () => Array.from(crypto.getRandomValues(new Uint8Array(3)))
+    .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  return `DHS-${seg()}-${seg()}`;
+}
+
+async function loadCodes() {
+  if (state.mode === 'demo') {
+    // keep as-is (persisted to localStorage)
+  } else {
+    const data = await apiFetch('/admin/premium-codes');
+    state.premiumCodes = data.codes || [];
+  }
+  renderCodes();
+}
+
+async function generateCodes() {
+  const count = Math.min(Math.max(parseInt($('codeCountInput').value, 10) || 1, 1), 50);
+  const durationDays = Math.min(Math.max(parseInt($('codeDaysInput').value, 10) || 30, 1), 3650);
+  const note = $('codeNoteInput').value.trim();
+
+  try {
+    let created;
+    if (state.mode === 'demo') {
+      created = Array.from({ length: count }, () => ({
+        _id: uid('code'),
+        code: randomDemoCode(),
+        durationDays,
+        note,
+        isUsed: false,
+        createdAt: new Date().toISOString(),
+      }));
+      state.premiumCodes = [...created, ...state.premiumCodes];
+      saveDemo();
+    } else {
+      const data = await apiFetch('/admin/premium-codes/generate', {
+        method: 'POST',
+        body: JSON.stringify({ count, durationDays, note }),
+      });
+      created = data.codes || [];
+      await loadCodes();
+    }
+    toast(`⚡ ${created.length} code${created.length > 1 ? 's' : ''} generated — share them with your users`, 'success');
+  } catch (err) {
+    toast(`Generate failed: ${err.message}`, 'error');
+  }
+  renderCodes();
+}
+
+async function deleteCode(id) {
+  const code = state.premiumCodes.find(c => c._id === id);
+  if (!code) return;
+  if (code.isUsed) {
+    toast('Code already redeemed — cannot delete', 'error');
+    return;
+  }
+  try {
+    if (state.mode === 'demo') {
+      state.premiumCodes = state.premiumCodes.filter(c => c._id !== id);
+      saveDemo();
+    } else {
+      await apiFetch(`/admin/premium-codes/${id}`, { method: 'DELETE' });
+      await loadCodes();
+    }
+    toast('Code deleted');
+  } catch (err) {
+    toast(`Delete failed: ${err.message}`, 'error');
+  }
+  renderCodes();
+}
+
+function copyCode(code) {
+  navigator.clipboard?.writeText(code).then(
+    () => toast(`📋 ${code} copied`, 'success'),
+    () => toast('Copy failed — select the code manually', 'error'),
+  );
+}
+
+function renderCodes() {
+  const rows = $('codeRows');
+  if (!state.premiumCodes.length) {
+    rows.innerHTML = `<tr><td colspan="5" class="placeholder-cell">No codes yet — generate a batch above</td></tr>`;
+    return;
+  }
+  rows.innerHTML = state.premiumCodes.map(c => {
+    const created = c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—';
+    const status = c.isUsed
+      ? `<span class="code-status used" title="${escapeHtml(c.usedBy?.email || c.usedBy?.name || 'redeemed')}">Redeemed${c.usedBy?.name ? ` · ${escapeHtml(c.usedBy.name)}` : ''}</span>`
+      : `<span class="code-status unused">Unused</span>`;
+    return `<tr>
+      <td><span class="code-pill">${escapeHtml(c.code)}</span></td>
+      <td>${c.durationDays}d</td>
+      <td>${status}${c.note ? `<div class="tiny muted">${escapeHtml(c.note)}</div>` : ''}</td>
+      <td class="muted tiny">${created}</td>
+      <td>
+        <div class="code-actions">
+          <button class="icon-btn" data-copy="${escapeHtml(c.code)}" title="Copy code">📋</button>
+          ${c.isUsed ? '' : `<button class="icon-btn danger" data-delcode="${c._id}" title="Delete code">🗑</button>`}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  rows.querySelectorAll('[data-copy]').forEach(btn =>
+    btn.addEventListener('click', () => copyCode(btn.dataset.copy)));
+  rows.querySelectorAll('[data-delcode]').forEach(btn =>
+    btn.addEventListener('click', () => deleteCode(btn.dataset.delcode)));
+}
+
 // ── Bootstrap ─────────────────────────────────────────────────────
 function enterApp(mode) {
   state.mode = mode;
@@ -615,6 +732,15 @@ function bindEvents() {
   $('createEpisodeBtn').addEventListener('click', createEpisode);
   $('createAnimeBtn').addEventListener('click', createAnime);
   $('newAnimeBtn').addEventListener('click', () => openModal('animeModal'));
+
+  // Premium codes
+  $('codesBtn').addEventListener('click', async () => {
+    openModal('codesModal');
+    try { await loadCodes(); } catch (err) {
+      toast(`Failed to load codes: ${err.message}`, 'error');
+    }
+  });
+  $('generateCodesBtn').addEventListener('click', generateCodes);
 
   document.querySelectorAll('[data-close]').forEach(btn =>
     btn.addEventListener('click', closeModals));

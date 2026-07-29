@@ -66,6 +66,7 @@
           <div class="stat glass"><span id="statHosts">0</span><label>Hosts</span></div>
         </div>
         <div class="topbar-actions">
+          <button id="codesBtn" class="btn btn-ghost" title="Premium activation codes">💎</button>
           <button id="refreshBtn" class="btn btn-ghost" title="Refresh">⟳</button>
           <button id="logoutBtn" class="btn btn-ghost" title="Sign out">⏻</button>
         </div>
@@ -166,6 +167,50 @@ Telegram | https://t.me/c/123/456 | 720p"></textarea>
         <button id="createAnimeBtn" class="btn btn-success">Create &amp; Notify Users 🔔</button>
         <button class="btn btn-ghost" data-close>Cancel</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PREMIUM CODES MODAL ══════════════ -->
+  <div id="codesModal" class="modal-backdrop hidden">
+    <div class="modal glass-strong">
+      <div class="modal-head">
+        <div>
+          <h3>💎 Premium Activation Codes</h3>
+          <p class="muted tiny">Generate codes → share with users → they redeem in the app (Account → Activate with Code)</p>
+        </div>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+
+      <div class="generate-box">
+        <div class="generate-field">
+          <label>Count</label>
+          <input id="codeCountInput" type="number" min="1" max="50" value="5" />
+        </div>
+        <div class="generate-field">
+          <label>Duration (days)</label>
+          <input id="codeDaysInput" type="number" min="1" max="3650" value="30" />
+        </div>
+        <div class="generate-field grow">
+          <label>Note <span class="muted tiny">(optional)</span></label>
+          <input id="codeNoteInput" type="text" placeholder="e.g. Telegram giveaway" maxlength="120" />
+        </div>
+        <button id="generateCodesBtn" class="btn btn-primary">⚡ Generate</button>
+      </div>
+
+      <table class="codes-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th style="width:70px">Days</th>
+            <th>Status</th>
+            <th style="width:110px">Created</th>
+            <th style="width:80px"></th>
+          </tr>
+        </thead>
+        <tbody id="codeRows">
+          <tr><td colspan="5" class="placeholder-cell">No codes yet — generate a batch above</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 

@@ -28,6 +28,17 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     );
   }
 
+  /// Opening this page acknowledges the badge even if it was reached
+  /// via the header bell instead of the tab bar. New notifications
+  /// arriving while the page is visible re-acknowledge automatically.
+  void _ackBadge(NotificationCenterState state) {
+    if (state.badgeCount > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationCenterProvider.notifier).acknowledge();
+      });
+    }
+  }
+
   IconData _typeIcon(String type) {
     switch (type) {
       case 'new_episode':
@@ -74,6 +85,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(notificationCenterProvider);
+    _ackBadge(state);
 
     return Scaffold(
       appBar: AppBar(

@@ -44,13 +44,17 @@ class _MainPageState extends ConsumerState<MainPage> {
       HapticFeedback.selectionClick();
       setState(() => _currentIndex = index);
       context.go(_navItems[index].path);
+      // Opening Alerts clears the badge immediately (until new alerts arrive)
+      if (_navItems[index].path == '/notifications') {
+        ref.read(notificationCenterProvider.notifier).acknowledge();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final unread = ref.watch(
-      notificationCenterProvider.select((s) => s.unreadCount),
+      notificationCenterProvider.select((s) => s.badgeCount),
     );
 
     return Scaffold(

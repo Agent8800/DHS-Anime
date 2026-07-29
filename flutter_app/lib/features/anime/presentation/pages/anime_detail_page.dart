@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../download/presentation/widgets/download_links_sheet.dart';
 import '../widgets/anime_info_section.dart';
 import '../widgets/character_list_widget.dart';
+import '../widgets/folder_download_section.dart';
 
 class AnimeDetailPage extends ConsumerStatefulWidget {
   final String animeId;
@@ -254,38 +255,13 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
             child: CharacterListWidget().animate().fadeIn(duration: Duration(milliseconds: 400)),
           ),
 
-          // Episode List Header
+          // Episode downloads — folder-wise groups, per-episode download
+          // buttons + per-folder "download all".
           SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 24, 20, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Episodes',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.push('/anime/${widget.animeId}/episodes'),
-                    child: Text('View All'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Episode List (Limited)
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return _buildEpisodeTile(index + 1);
-              },
-              childCount: 5,
-            ),
+            child: FolderDownloadSection(
+              animeId: widget.animeId,
+              animeTitle: 'Battle Through The Heavens',
+            ).animate().fadeIn(duration: const Duration(milliseconds: 400)),
           ),
 
           // Related Series
@@ -376,60 +352,4 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
     );
   }
 
-  Widget _buildEpisodeTile(int episodeNumber) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: ListTile(
-        contentPadding: EdgeInsets.all(12),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: CachedNetworkImage(
-            imageUrl: 'https://via.placeholder.com/100x60',
-            width: 90,
-            height: 60,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Shimmer.fromColors(
-              baseColor: AppTheme.cardColor,
-              highlightColor: AppTheme.surfaceColor,
-              child: Container(color: AppTheme.cardColor),
-            ),
-            errorWidget: (context, url, error) => Container(
-              width: 90,
-              height: 60,
-              color: AppTheme.surfaceColor,
-              child: Icon(Icons.play_circle_outline, color: AppTheme.textHint),
-            ),
-          ),
-        ),
-        title: Text(
-          'Episode $episodeNumber',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Text(
-          'Hindi • 1080p • 24 min',
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-        ),
-        trailing: Icon(
-          Icons.download_for_offline_outlined,
-          color: AppTheme.primaryColor,
-        ),
-        onTap: () {
-          // Streaming removed — show third-party download links instead
-          DownloadLinksSheet.show(
-            context,
-            episodeId: 'ep_$episodeNumber',
-            animeTitle: widget.animeId,
-            episodeNumber: episodeNumber,
-          );
-        },
-      ),
-    );
-  }
 }
