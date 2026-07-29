@@ -34,8 +34,11 @@
   <!-- ══════════════ APP SHELL ══════════════ -->
   <div id="appShell" class="app-shell hidden">
 
+    <!-- Mobile drawer backdrop -->
+    <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+
     <!-- Sidebar -->
-    <aside class="sidebar glass">
+    <aside id="sidebar" class="sidebar glass">
       <div class="sidebar-head">
         <span class="logo-badge small">▶</span>
         <div>
@@ -56,14 +59,15 @@
     <!-- Main -->
     <main class="main">
       <header class="topbar glass">
-        <div>
-          <h2 id="currentTitle">Select an anime</h2>
-          <p id="currentSub" class="muted tiny">Pick a title on the left to manage its episode mirrors</p>
+        <button id="menuToggle" class="btn btn-ghost menu-toggle" title="Menu">☰</button>
+        <div class="topbar-title">
+          <h2 id="currentTitle">Dashboard</h2>
+          <p id="currentSub" class="muted tiny">Audience stats &amp; premium code generator</p>
         </div>
         <div class="stats">
           <div class="stat glass"><span id="statEpisodes">0</span><label>Episodes</label></div>
-          <div class="stat glass"><span id="statLinks">0</span><label>Links</span></div>
-          <div class="stat glass"><span id="statHosts">0</span><label>Hosts</span></div>
+          <div class="stat glass"><span id="statLinks">0</span><label>Links</label></div>
+          <div class="stat glass"><span id="statHosts">0</span><label>Hosts</label></div>
         </div>
         <div class="topbar-actions">
           <button id="codesBtn" class="btn btn-ghost" title="Premium activation codes">💎</button>
@@ -72,26 +76,119 @@
         </div>
       </header>
 
-      <div class="episodes-wrap">
-        <div class="episodes-toolbar">
-          <h3>Episodes</h3>
-          <button id="addEpisodeBtn" class="btn btn-primary" disabled>＋ Add Episode</button>
+      <!-- View tabs -->
+      <nav class="view-tabs">
+        <button id="tabDashboard" class="view-tab active" data-view="dashboard">📊 Dashboard</button>
+        <button id="tabLinks" class="view-tab" data-view="links">🔗 Mirror Links</button>
+      </nav>
+
+      <!-- ════════ DASHBOARD VIEW ════════ -->
+      <section id="dashboardView" class="view-section">
+        <div class="stat-cards">
+          <div class="stat-card glass">
+            <span class="stat-card-icon" style="background:rgba(255,92,56,0.14)">👥</span>
+            <div>
+              <span id="statTotalUsers" class="stat-card-value">—</span>
+              <label>Total Users</label>
+            </div>
+          </div>
+          <div class="stat-card glass">
+            <span class="stat-card-icon" style="background:rgba(6,167,255,0.14)">⚡</span>
+            <div>
+              <span id="statDailyActive" class="stat-card-value">—</span>
+              <label>Daily Active Users</label>
+            </div>
+          </div>
+          <div class="stat-card glass">
+            <span class="stat-card-icon" style="background:rgba(255,176,32,0.14)">💎</span>
+            <div>
+              <span id="statTotalPremium" class="stat-card-value">—</span>
+              <label>Total Premium Users</label>
+            </div>
+          </div>
+          <div class="stat-card glass">
+            <span class="stat-card-icon" style="background:rgba(62,207,142,0.14)">✅</span>
+            <div>
+              <span id="statActivePremium" class="stat-card-value">—</span>
+              <label>Active Premium Users</label>
+            </div>
+          </div>
+          <div class="stat-card glass">
+            <span class="stat-card-icon" style="background:rgba(148,108,255,0.14)">⬇</span>
+            <div>
+              <span id="statTotalDownloads" class="stat-card-value">—</span>
+              <label>Total Downloads</label>
+            </div>
+          </div>
         </div>
-        <table class="episode-table">
-          <thead>
-            <tr>
-              <th style="width:60px">#</th>
-              <th>Title</th>
-              <th>Mirror Links</th>
-              <th style="width:120px">Downloads</th>
-              <th style="width:120px"></th>
-            </tr>
-          </thead>
-          <tbody id="episodeRows">
-            <tr><td colspan="5" class="placeholder-cell">🎌 Choose an anime to see its episodes</td></tr>
-          </tbody>
-        </table>
-      </div>
+
+        <!-- Premium code generator -->
+        <div class="panel-box">
+          <div class="panel-box-head">
+            <div>
+              <h3>💎 Premium Activation Codes</h3>
+              <p class="muted tiny">Generate → share → users redeem in the app (Account → Activate with Code)</p>
+            </div>
+          </div>
+          <div class="generate-box">
+            <div class="generate-field">
+              <label>Count</label>
+              <input id="codeCountInput" type="number" min="1" max="50" value="5" />
+            </div>
+            <div class="generate-field">
+              <label>Duration (days)</label>
+              <input id="codeDaysInput" type="number" min="1" max="3650" value="30" />
+            </div>
+            <div class="generate-field grow">
+              <label>Note <span class="muted tiny">(optional)</span></label>
+              <input id="codeNoteInput" type="text" placeholder="e.g. Telegram giveaway" maxlength="120" />
+            </div>
+            <button id="generateCodesBtn" class="btn btn-primary">⚡ Generate</button>
+          </div>
+          <div class="table-scroll">
+            <table class="codes-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th style="width:70px">Days</th>
+                  <th>Status</th>
+                  <th style="width:110px">Created</th>
+                  <th style="width:80px"></th>
+                </tr>
+              </thead>
+              <tbody id="codeRows">
+                <tr><td colspan="5" class="placeholder-cell">No codes yet — generate a batch above</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ MIRROR LINKS VIEW ════════ -->
+      <section id="linksView" class="view-section hidden">
+        <div class="episodes-wrap">
+          <div class="episodes-toolbar">
+            <h3>Episodes</h3>
+            <button id="addEpisodeBtn" class="btn btn-primary" disabled>＋ Add Episode</button>
+          </div>
+          <div class="table-scroll">
+            <table class="episode-table">
+              <thead>
+                <tr>
+                  <th style="width:60px">#</th>
+                  <th>Title</th>
+                  <th>Mirror Links</th>
+                  <th style="width:120px">Downloads</th>
+                  <th style="width:120px"></th>
+                </tr>
+              </thead>
+              <tbody id="episodeRows">
+                <tr><td colspan="5" class="placeholder-cell">🎌 Choose an anime to see its episodes</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -167,50 +264,6 @@ Telegram | https://t.me/c/123/456 | 720p"></textarea>
         <button id="createAnimeBtn" class="btn btn-success">Create &amp; Notify Users 🔔</button>
         <button class="btn btn-ghost" data-close>Cancel</button>
       </div>
-    </div>
-  </div>
-
-  <!-- ══════════════ PREMIUM CODES MODAL ══════════════ -->
-  <div id="codesModal" class="modal-backdrop hidden">
-    <div class="modal glass-strong">
-      <div class="modal-head">
-        <div>
-          <h3>💎 Premium Activation Codes</h3>
-          <p class="muted tiny">Generate codes → share with users → they redeem in the app (Account → Activate with Code)</p>
-        </div>
-        <button class="btn btn-ghost" data-close>✕</button>
-      </div>
-
-      <div class="generate-box">
-        <div class="generate-field">
-          <label>Count</label>
-          <input id="codeCountInput" type="number" min="1" max="50" value="5" />
-        </div>
-        <div class="generate-field">
-          <label>Duration (days)</label>
-          <input id="codeDaysInput" type="number" min="1" max="3650" value="30" />
-        </div>
-        <div class="generate-field grow">
-          <label>Note <span class="muted tiny">(optional)</span></label>
-          <input id="codeNoteInput" type="text" placeholder="e.g. Telegram giveaway" maxlength="120" />
-        </div>
-        <button id="generateCodesBtn" class="btn btn-primary">⚡ Generate</button>
-      </div>
-
-      <table class="codes-table">
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th style="width:70px">Days</th>
-            <th>Status</th>
-            <th style="width:110px">Created</th>
-            <th style="width:80px"></th>
-          </tr>
-        </thead>
-        <tbody id="codeRows">
-          <tr><td colspan="5" class="placeholder-cell">No codes yet — generate a batch above</td></tr>
-        </tbody>
-      </table>
     </div>
   </div>
 

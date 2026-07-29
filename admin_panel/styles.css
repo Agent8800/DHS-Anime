@@ -423,3 +423,161 @@ label { display: block; font-size: 12.5px; color: var(--text-2); margin: 14px 0 
 }
 .icon-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
 .icon-btn.danger:hover { border-color: rgba(241, 72, 91, 0.6); color: #f1485b; }
+
+/* ═══════════════════════════════════════════════════
+   Views (Dashboard / Mirror Links), stat cards, drawer
+   ═══════════════════════════════════════════════════ */
+.menu-toggle { display: none; }
+
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.view-tab {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text-2);
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.view-tab:hover { color: var(--text); }
+.view-tab.active {
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(255, 92, 56, 0.3);
+}
+
+.view-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  padding-bottom: 6px;
+}
+
+/* Stat cards */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.stat-card-icon {
+  width: 46px; height: 46px;
+  display: grid; place-items: center;
+  font-size: 21px;
+  border-radius: 13px;
+  flex-shrink: 0;
+}
+.stat-card > div { display: flex; flex-direction: column; min-width: 0; }
+.stat-card-value {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.stat-card label { margin: 2px 0 0; font-size: 12px; color: var(--text-3); }
+
+/* Panel box (premium codes, etc.) */
+.panel-box {
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+  padding: 18px 20px;
+}
+.panel-box-head { margin-bottom: 14px; }
+.panel-box-head h3 { font-size: 16px; }
+
+/* Horizontal scroll for wide tables on small screens */
+.table-scroll { overflow-x: auto; }
+.table-scroll table { min-width: 560px; }
+
+/* ── Drawer backdrop (mobile sidebar) ────────────── */
+.drawer-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(8, 8, 14, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 60;
+  animation: fade 0.2s ease both;
+}
+
+/* ═══════════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════════ */
+
+/* Tablets & small laptops */
+@media (max-width: 1100px) {
+  .app-shell { grid-template-columns: 260px 1fr; padding: 14px; gap: 14px; }
+}
+
+/* Phones / drawers */
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 1fr; height: auto; min-height: 100vh; overflow: visible; }
+  .main { overflow: visible; }
+
+  /* Sidebar → slide-in drawer */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: min(320px, 86vw);
+    z-index: 70;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    background: rgba(18, 18, 26, 0.97);
+    transform: translateX(-105%);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    max-height: none;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .menu-toggle { display: inline-flex; padding: 9px 13px; font-size: 17px; }
+  .stats { display: none; }
+
+  .topbar { gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+  .topbar .topbar-title { flex: 1; min-width: 140px; }
+  .topbar h2 { font-size: 18px; }
+
+  .stat-cards { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat-card { padding: 14px; gap: 11px; }
+  .stat-card-icon { width: 40px; height: 40px; font-size: 18px; }
+  .stat-card-value { font-size: 20px; }
+}
+
+/* Small phones */
+@media (max-width: 560px) {
+  .app-shell { padding: 10px; gap: 10px; }
+  .view-tabs { margin: 0 -2px; }
+  .view-tab { padding: 8px 14px; font-size: 12.5px; }
+
+  .topbar-actions { width: 100%; justify-content: flex-end; }
+
+  .generate-box { flex-direction: column; align-items: stretch; }
+  .generate-field input { width: 100%; }
+  .generate-box .btn { width: 100%; }
+
+  .stat-cards { grid-template-columns: 1fr 1fr; }
+  .panel-box, .episodes-wrap { padding: 14px; }
+
+  .modal { padding: 16px; max-height: 92vh; border-radius: 16px; }
+  .modal-backdrop { padding: 10px; }
+  .login-card { padding: 26px 20px; }
+  .toast { width: calc(100% - 32px); text-align: center; }
+}

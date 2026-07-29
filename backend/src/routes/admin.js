@@ -8,6 +8,7 @@ router.use(authenticate, requireAdmin);
 
 // Dashboard
 router.get('/dashboard', adminController.getDashboard);
+router.get('/user-stats', adminController.getUserStats);
 
 // Anime management
 router.post('/anime', adminController.createAnime);

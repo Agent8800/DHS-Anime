@@ -1180,8 +1180,60 @@ const deletePremiumCode = async (req, res) => {
   }
 };
 
+/**
+ * Focused audience stats for the admin panel dashboard cards:
+ * total users, daily active users, total premium users, active premium.
+ */
+const getUserStats = async (req, res) => {
+  try {
+    const now = new Date();
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const [
+      totalUsers,
+      dailyActiveUsers,
+      totalPremiumUsers,
+      activePremiumUsers,
+      totalDownloads
+    ] = await Promise.all([
+      User.countDocuments(),
+      // "Daily active" = signed in within the last 24 hours
+      User.countDocuments({ lastLogin: { $gte: dayAgo } }),
+      // Ever had premium granted/redeemed
+      User.countDocuments({ premiumType: { $in: ['monthly', 'lifetime'] } }),
+      // Premium valid right now
+      User.countDocuments({
+        $or: [
+          { premiumType: 'lifetime' },
+          { premiumType: 'monthly', premiumExpiry: { $gt: now } }
+        ]
+      }),
+      Download.countDocuments()
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        dailyActiveUsers,
+        totalPremiumUsers,
+        activePremiumUsers,
+        totalDownloads,
+        generatedAt: now
+      }
+    });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load user stats'
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
+  getUserStats,
   fetchMetadata,
   createAnime,
   updateAnime,

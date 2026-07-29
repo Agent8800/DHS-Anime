@@ -33,6 +33,7 @@ const state = {
   editingEpisode: null,   // episode whose links are being edited
   draftLinks: [],         // working copy inside the editor
   premiumCodes: [],       // generated premium activation codes
+  view: 'dashboard',      // 'dashboard' | 'links'
 };
 
 const $ = id => document.getElementById(id);
@@ -438,6 +439,8 @@ async function selectAnime(id) {
   state.selectedAnime = id;
   const anime = state.anime.find(a => a._id === id);
 
+  if (state.view !== 'links') setView('links');
+  closeDrawerMobile();
   $('currentTitle').textContent = anime?.title || 'Anime';
   $('currentSub').textContent = `${anime?.totalEpisodes ?? 0} episodes · ${anime?.status || ''}`;
   $('addEpisodeBtn').disabled = false;
@@ -532,6 +535,67 @@ async function createAnime() {
 function openModal(id) { $(id).classList.remove('hidden'); }
 function closeModals() {
   document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden'));
+}
+
+// ── Views (Dashboard / Mirror Links) ──────────────────────────────
+function setView(view) {
+  state.view = view;
+  const isDashboard = view === 'dashboard';
+
+  $('dashboardView').classList.toggle('hidden', !isDashboard);
+  $('linksView').classList.toggle('hidden', isDashboard);
+  $('tabDashboard').classList.toggle('active', isDashboard);
+  $('tabLinks').classList.toggle('active', !isDashboard);
+  // Episode mini-stats only make sense in the links view
+  document.querySelector('.topbar .stats').style.display =
+    isDashboard ? 'none' : '';
+
+  if (isDashboard) {
+    $('currentTitle').textContent = 'Dashboard';
+    $('currentSub').textContent = 'Audience stats & premium code generator';
+    loadStats();
+    loadCodes().catch(err => toast(`Failed to load codes: ${err.message}`, 'error'));
+  } else if (state.selectedAnime) {
+    const anime = state.anime.find(a => a._id === state.selectedAnime);
+    $('currentTitle').textContent = anime?.title || 'Mirror Links';
+  } else {
+    $('currentTitle').textContent = 'Mirror Links';
+    $('currentSub').textContent = 'Pick a title on the left to manage its episode mirrors';
+  }
+}
+
+// ── Audience stat cards ───────────────────────────────────────────
+const DEMO_STATS = {
+  totalUsers: 1248, dailyActiveUsers: 96, totalPremiumUsers: 58,
+  activePremiumUsers: 41, totalDownloads: 5304,
+};
+
+async function loadStats() {
+  let stats = DEMO_STATS;
+  if (state.mode !== 'demo') {
+    try {
+      stats = await apiFetch('/admin/user-stats');
+    } catch (err) {
+      toast(`Stats unavailable: ${err.message}`, 'error');
+      return;
+    }
+  }
+  const fmt = n => Number(n || 0).toLocaleString('en-IN');
+  $('statTotalUsers').textContent = fmt(stats.totalUsers);
+  $('statDailyActive').textContent = fmt(stats.dailyActiveUsers);
+  $('statTotalPremium').textContent = fmt(stats.totalPremiumUsers);
+  $('statActivePremium').textContent = fmt(stats.activePremiumUsers);
+  $('statTotalDownloads').textContent = fmt(stats.totalDownloads);
+}
+
+// ── Mobile drawer ─────────────────────────────────────────────────
+function openDrawer(open) {
+  $('sidebar').classList.toggle('open', open);
+  $('drawerBackdrop').classList.toggle('hidden', !open);
+}
+
+function closeDrawerMobile() {
+  if (window.matchMedia('(max-width: 900px)').matches) openDrawer(false);
 }
 
 // ── Premium activation codes ──────────────────────────────────────
@@ -658,6 +722,7 @@ function enterApp(mode) {
   badge.className = `badge ${mode === 'demo' ? 'badge-demo' : 'badge-live'}`;
   if (mode === 'demo') seedDemo();
   refreshAnimeList();
+  setView('dashboard');
 }
 
 function bindEvents() {
@@ -734,13 +799,18 @@ function bindEvents() {
   $('newAnimeBtn').addEventListener('click', () => openModal('animeModal'));
 
   // Premium codes
-  $('codesBtn').addEventListener('click', async () => {
-    openModal('codesModal');
-    try { await loadCodes(); } catch (err) {
-      toast(`Failed to load codes: ${err.message}`, 'error');
-    }
-  });
+  $('codesBtn').addEventListener('click', () => setView('dashboard'));
   $('generateCodesBtn').addEventListener('click', generateCodes);
+
+  // View tabs
+  $('tabDashboard').addEventListener('click', () => setView('dashboard'));
+  $('tabLinks').addEventListener('click', () => setView('links'));
+
+  // Mobile drawer
+  $('menuToggle').addEventListener('click', () => {
+    openDrawer(!$('sidebar').classList.contains('open'));
+  });
+  $('drawerBackdrop').addEventListener('click', () => openDrawer(false));
 
   document.querySelectorAll('[data-close]').forEach(btn =>
     btn.addEventListener('click', closeModals));

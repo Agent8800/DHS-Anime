@@ -1,10 +1,18 @@
-# DonghuaHub Admin — Mirror Link Manager
+# DonghuaHub Admin — Dashboard & Mirror Link Manager
 
-A dependency-free web panel for adding **third-party mirror links** (Mega,
-GDrive, Terabox, Telegram, MediaFire, Torrent, Direct) to episodes. Links
-appear instantly in the app's download sheet, and **every newly added
-episode or donghua broadcasts a notification to all users** (push when the
-user granted permission, otherwise the in-app bell icon only).
+A dependency-free web panel for running the whole app from the browser
+(**fully responsive — works on phones too** via the ☰ drawer):
+
+- **📊 Dashboard** — Total Users, Daily Active Users (24 h), Total Premium,
+  Active Premium, Total Downloads (`GET /api/admin/user-stats`).
+- **💎 Premium codes** — generate batches of single-use activation codes
+  (`DHS-XXXXXX-XXXXXX`), copy/share them, and track who redeemed what.
+  Users redeem in the app at **Account → Activate with Code**.
+- **🔗 Mirror Links** — add **third-party mirror links** (Mega, GDrive,
+  Terabox, Telegram, MediaFire, Torrent, Direct) to episodes. Links appear
+  instantly in the app's download sheet, and **every newly added episode
+  or donghua broadcasts a notification to all users** (push when
+  permitted, otherwise the in-app bell icon only).
 
 ## Run it
 
@@ -15,6 +23,8 @@ cd admin_panel
 python3 -m http.server 8080   # or any static server / VS Code Live Server
 # open http://localhost:8080
 ```
+
+Full walkthrough: [`../docs/BUILD_AND_SETUP_GUIDE.md`](../docs/BUILD_AND_SETUP_GUIDE.md)
 
 ## Modes
 

@@ -2,6 +2,8 @@
 
 Modern Android & iOS application for **downloading** and watching Donghua (Chinese Animation) **offline**. All episodes and download links are uploaded manually by the administrator.
 
+> 📘 **New here?** Follow the step-by-step VS Code guide: **[docs/BUILD_AND_SETUP_GUIDE.md](docs/BUILD_AND_SETUP_GUIDE.md)** — backend, app, admin panel, premium codes, release APK.
+
 ## 🎬 Features
 
 ### For Users
