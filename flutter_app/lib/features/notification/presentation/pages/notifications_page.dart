@@ -139,7 +139,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
-              'System notifications are off. You still get every update here in the app — turn them on for alerts on your lock screen.',
+              'System alerts are off — you still get every update here.',
               style: TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 12.5,
@@ -183,7 +183,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'New episodes and new donghua will show up here.',
+            'New episodes will show up here.',
             style: TextStyle(color: AppTheme.textHint, fontSize: 14),
           ),
         ],

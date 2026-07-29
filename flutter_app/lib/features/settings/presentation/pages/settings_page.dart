@@ -83,7 +83,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   _buildNavigationTile(
                     icon: Icons.palette_outlined,
                     title: 'Theme & Colors',
-                    subtitle: 'Customize your app appearance',
+                    subtitle: 'Accent, dark & AMOLED',
                     onTap: () => context.push('/settings/theme'),
                   ),
                   _buildSwitchTile(
@@ -138,8 +138,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   _buildNavigationTile(
                     icon: Icons.download_outlined,
                     title: 'Download Manager',
-                    subtitle: 'Manage your downloads',
-                    onTap: () => context.push('/downloads'),
+                                        onTap: () => context.push('/downloads'),
                   ),
                   _buildNavigationTile(
                     icon: Icons.folder_outlined,
@@ -150,13 +149,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   _buildNavigationTile(
                     icon: Icons.sd_storage_outlined,
                     title: 'Storage Permission',
-                    subtitle: 'Required for the public DHS Anime folder',
+                    subtitle: 'For the public DHS Anime folder',
                     onTap: _handleStoragePermission,
                   ),
                   _buildNavigationTile(
                     icon: Icons.notifications_outlined,
                     title: 'Notifications',
-                    subtitle: 'New episode & new donghua alerts',
+                    subtitle: 'Bell feed + push alerts',
                     onTap: () => context.push('/notifications'),
                   ),
                 ],
@@ -169,7 +168,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   _buildNavigationTile(
                     icon: Icons.delete_outline,
                     title: 'Clear Cache',
-                    subtitle: '128 MB cached',
+                    
                     onTap: () => _showClearCacheDialog(),
                   ),
                   _buildNavigationTile(

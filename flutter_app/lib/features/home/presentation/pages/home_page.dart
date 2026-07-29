@@ -83,7 +83,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               // Trending Now
               SliverToBoxAdapter(
                 child: _buildAnimeSection(
-                  'Trending Now 🔥',
+                  'Trending Now',
                   _getDummyAnimeList(),
                 ),
               ),
@@ -109,7 +109,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               // Top Rated
               SliverToBoxAdapter(
                 child: _buildAnimeSection(
-                  'Top Rated ⭐',
+                  'Top Rated',
                   _getDummyAnimeList(),
                 ),
               ),
@@ -117,7 +117,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               // Random Picks
               SliverToBoxAdapter(
                 child: _buildAnimeSection(
-                  'Random Picks 🎲',
+                  'Random Picks',
                   _getDummyAnimeList(),
                 ),
               ),

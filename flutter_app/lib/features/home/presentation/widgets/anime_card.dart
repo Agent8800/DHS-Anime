@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/animated_pressable.dart';
 
 class AnimeCard extends StatelessWidget {
   final String title;
@@ -26,11 +27,11 @@ class AnimeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return AnimatedPressable(
       onTap: onTap,
       child: Container(
         width: width,
-        margin: EdgeInsets.only(right: 14),
+        margin: const EdgeInsets.only(right: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -38,17 +39,11 @@ class AnimeCard extends StatelessWidget {
             Container(
               height: height,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                boxShadow: AppTheme.shadowMd,
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -163,9 +158,11 @@ class AnimeCard extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.1,
                 color: AppTheme.textPrimary,
+                height: 1.25,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -179,15 +176,15 @@ class AnimeCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'ongoing':
-        return Colors.green;
+        return AppTheme.successColor;
       case 'completed':
-        return Colors.blue;
+        return AppTheme.infoColor;
       case 'upcoming':
-        return Colors.orange;
+        return AppTheme.warningColor;
       case 'hiatus':
-        return Colors.red;
+        return AppTheme.errorColor;
       default:
-        return Colors.grey;
+        return AppTheme.textHint;
     }
   }
 }

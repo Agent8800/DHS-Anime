@@ -13,16 +13,14 @@ class ThemeSettingsPage extends ConsumerWidget {
     final themeState = ref.watch(themeProvider);
 
     final colors = [
-      Color(0xFF6C63FF),
-      Color(0xFFFF6584),
-      Color(0xFF03DAC6),
-      Color(0xFF4CAF50),
-      Color(0xFFFF9800),
-      Color(0xFF2196F3),
-      Color(0xFF9C27B0),
-      Color(0xFFE91E63),
-      Color(0xFF00BCD4),
-      Color(0xFFFFEB3B),
+      Color(0xFFFF5C38), // Ember (default)
+      Color(0xFFE63B4D), // Crimson
+      Color(0xFFFFB020), // Gold
+      Color(0xFF34C77B), // Emerald
+      Color(0xFF2DD4BF), // Teal
+      Color(0xFF4C8DFF), // Sky
+      Color(0xFF8B7CF7), // Violet
+      Color(0xFFFF6B8A), // Rose
     ];
 
     return Scaffold(

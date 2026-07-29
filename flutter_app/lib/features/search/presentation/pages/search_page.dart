@@ -312,7 +312,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
           // Trending
           Text(
-            'Trending Searches 🔥',
+            'Trending Searches',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

@@ -51,16 +51,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1E1E2E),
-              Color(0xFF121212),
-            ],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),

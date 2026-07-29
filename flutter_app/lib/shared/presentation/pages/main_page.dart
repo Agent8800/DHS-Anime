@@ -1,10 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 
+/// Shell with a floating glass tab bar — thumb-reachable, background
+/// blurs behind it, active tab gets an ember-lit pill with a soft glow.
 class MainPage extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -17,11 +20,11 @@ class MainPage extends ConsumerStatefulWidget {
 class _MainPageState extends ConsumerState<MainPage> {
   int _currentIndex = 0;
 
-  final List<_NavItem> _navItems = [
-    _NavItem(icon: Icons.home_rounded, activeIcon: Icons.home_filled, label: 'Home', path: '/'),
-    _NavItem(icon: Icons.search_rounded, activeIcon: Icons.search, label: 'Search', path: '/search'),
-    _NavItem(icon: Icons.play_circle_outline_rounded, activeIcon: Icons.play_circle_fill_rounded, label: 'Watching', path: '/watching'),
-    _NavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings, label: 'Settings', path: '/settings'),
+  static const List<_NavItem> _navItems = [
+    _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home', path: '/'),
+    _NavItem(icon: Icons.search_rounded, activeIcon: Icons.search_rounded, label: 'Search', path: '/search'),
+    _NavItem(icon: Icons.play_circle_outline_rounded, activeIcon: Icons.play_circle_rounded, label: 'Watching', path: '/watching'),
+    _NavItem(icon: Icons.tune_rounded, activeIcon: Icons.tune_rounded, label: 'Settings', path: '/settings'),
   ];
 
   @override
@@ -36,6 +39,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   void _onTap(int index) {
     if (index != _currentIndex) {
+      HapticFeedback.selectionClick();
       setState(() => _currentIndex = index);
       context.go(_navItems[index].path);
     }
@@ -44,102 +48,167 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Main content
-          widget.child,
-
-          // Floating bottom navigation
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: _buildFloatingNavBar(),
-          ),
-        ],
+      extendBody: true,
+      body: widget.child,
+      bottomNavigationBar: _FloatingTabBar(
+        items: _navItems,
+        currentIndex: _currentIndex,
+        onTap: _onTap,
       ),
     );
   }
+}
 
-  Widget _buildFloatingNavBar() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          height: 70,
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: _navItems.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              final isActive = index == _currentIndex;
+class _FloatingTabBar extends StatelessWidget {
+  final List<_NavItem> items;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
 
-              return GestureDetector(
-                onTap: () => _onTap(index),
-                behavior: HitTestBehavior.opaque,
-                child: AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isActive ? 20 : 16,
-                    vertical: 8,
-                  ),
-                  decoration: isActive
-                      ? BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        )
-                      : null,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isActive ? item.activeIcon : item.icon,
-                        color: isActive ? AppTheme.primaryColor : AppTheme.textHint,
-                        size: 24,
-                      ),
-                      if (isActive) ...[
-                        SizedBox(width: 8),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+  const _FloatingTabBar({
+    required this.items,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding > 0 ? 12 : 20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            height: 66,
+            decoration: BoxDecoration(
+              color: const Color(0xFF101014).withOpacity(0.72),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+              border: Border.all(color: AppTheme.hairlineColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.45),
+                  blurRadius: 28,
+                  offset: const Offset(0, 12),
                 ),
-              )
-                  .animate(delay: Duration(milliseconds: index * 100))
-                  .fadeIn(duration: Duration(milliseconds: 400))
-                  .slideY(begin: 0.3, end: 0, duration: Duration(milliseconds: 400));
-            }).toList(),
+              ],
+            ),
+            child: Row(
+              children: items.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                final isActive = index == currentIndex;
+                return Expanded(
+                  child: _TabItem(
+                    item: item,
+                    isActive: isActive,
+                    onTap: () => onTap(index),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
     )
         .animate()
-        .fadeIn(duration: Duration(milliseconds: 600))
-        .slideY(begin: 1, end: 0, duration: Duration(milliseconds: 400), curve: Curves.easeOutBack);
+        .fadeIn(duration: AppTheme.motionMedium)
+        .slideY(
+          begin: 0.9,
+          end: 0,
+          duration: AppTheme.motionMedium,
+          curve: AppTheme.motionCurve,
+        );
+  }
+}
+
+class _TabItem extends StatefulWidget {
+  final _NavItem item;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _TabItem({
+    required this.item,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  State<_TabItem> createState() => _TabItemState();
+}
+
+class _TabItemState extends State<_TabItem> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        widget.isActive ? AppTheme.primaryColor : AppTheme.textHint;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _pressed ? 0.88 : 1.0,
+        duration: AppTheme.motionFast,
+        curve: AppTheme.motionCurve,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Active pill behind the icon
+            AnimatedContainer(
+              duration: AppTheme.motionFast,
+              curve: AppTheme.motionCurve,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+              decoration: BoxDecoration(
+                color: widget.isActive
+                    ? AppTheme.primaryColor.withOpacity(0.16)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                boxShadow: widget.isActive
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withOpacity(0.25),
+                          blurRadius: 14,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: AnimatedSwitcher(
+                duration: AppTheme.motionFast,
+                transitionBuilder: (child, animation) => ScaleTransition(
+                  scale: animation,
+                  child: child,
+                ),
+                child: Icon(
+                  widget.isActive ? widget.item.activeIcon : widget.item.icon,
+                  key: ValueKey(widget.isActive),
+                  color: color,
+                  size: 23,
+                ),
+              ),
+            ),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: AppTheme.motionFast,
+              curve: AppTheme.motionCurve,
+              style: TextStyle(
+                color: color,
+                fontSize: 10.5,
+                fontWeight:
+                    widget.isActive ? FontWeight.w600 : FontWeight.w500,
+                letterSpacing: 0.2,
+              ),
+              child: Text(widget.item.label),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

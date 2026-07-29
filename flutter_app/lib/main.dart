@@ -99,6 +99,8 @@ class _DonghuaHubAppState extends ConsumerState<DonghuaHubApp> {
       ),
       themeMode: ThemeMode.dark,
       routerConfig: router,
+      // Uniform scroll motion across every screen
+      scrollBehavior: const AppScrollBehavior(),
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(

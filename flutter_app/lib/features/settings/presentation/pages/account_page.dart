@@ -92,8 +92,8 @@ class AccountPage extends ConsumerWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF6C63FF),
-                    Color(0xFF9D4EDD),
+                    AppTheme.primaryColor,
+                    AppTheme.accentColor,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,

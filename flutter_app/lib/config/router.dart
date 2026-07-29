@@ -52,7 +52,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => CustomTransitionPage(
               child: const HomePage(),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                );
+                return FadeTransition(
+                  opacity: curved,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.02), end: Offset.zero)
+                        .animate(curved),
+                    child: child,
+                  ),
+                );
               },
             ),
           ),
@@ -63,7 +74,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => CustomTransitionPage(
               child: const SearchPage(),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                );
+                return FadeTransition(
+                  opacity: curved,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.02), end: Offset.zero)
+                        .animate(curved),
+                    child: child,
+                  ),
+                );
               },
             ),
           ),
@@ -74,7 +96,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => CustomTransitionPage(
               child: const BookmarksPage(),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                );
+                return FadeTransition(
+                  opacity: curved,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.02), end: Offset.zero)
+                        .animate(curved),
+                    child: child,
+                  ),
+                );
               },
             ),
           ),
@@ -85,7 +118,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => CustomTransitionPage(
               child: const SettingsPage(),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                );
+                return FadeTransition(
+                  opacity: curved,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.02), end: Offset.zero)
+                        .animate(curved),
+                    child: child,
+                  ),
+                );
               },
             ),
           ),

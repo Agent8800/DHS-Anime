@@ -8,10 +8,8 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../notification/presentation/providers/notification_provider.dart';
 
-/// Floating glass header that hovers above the home feed (same visual
-/// language as the floating bottom navigation). The bell icon leads to
-/// the notification center and shows an unread badge — updates land here
-/// even when system notification permission is denied.
+/// Floating glass header — a single quiet bar that hovers above the
+/// feed and matches the floating tab bar visually.
 class GlassmorphismHeader extends ConsumerWidget {
   final double scrollOffset;
 
@@ -27,28 +25,22 @@ class GlassmorphismHeader extends ConsumerWidget {
     final auth = ref.watch(authServiceProvider);
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16, statusBarHeight + 10, 16, 0),
+      margin: EdgeInsets.fromLTRB(16, statusBarHeight + 8, 16, 0),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
-            height: 62,
+            height: 60,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.45 + scrollIntensity * 0.25),
-              borderRadius: BorderRadius.circular(22),
+              color: const Color(0xFF101014)
+                  .withOpacity(0.55 + scrollIntensity * 0.25),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
               border: Border.all(
-                color: Colors.white.withOpacity(0.08 + scrollIntensity * 0.07),
-                width: 1,
+                color: Colors.white.withOpacity(0.05 + scrollIntensity * 0.06),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              boxShadow: AppTheme.shadowLg,
             ),
             child: Row(
               children: [
@@ -61,8 +53,9 @@ class GlassmorphismHeader extends ConsumerWidget {
                       Text(
                         _getGreeting(),
                         style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
+                          fontSize: 10.5,
+                          letterSpacing: 0.3,
+                          color: AppTheme.textHint,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -70,42 +63,36 @@ class GlassmorphismHeader extends ConsumerWidget {
                       const Text(
                         'DonghuaHub',
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
-                          letterSpacing: 0.5,
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Notification bell (badge = unread in-app notifications)
-                _buildIconButton(
-                  context: context,
-                  icon: Icons.notifications_outlined,
+                // Bell (in-app notifications — works without permission)
+                _HeaderIcon(
+                  icon: Icons.notifications_none_rounded,
                   badgeCount: unread,
                   onTap: () => context.push('/notifications'),
                 ),
-
-                const SizedBox(width: 4),
-
-                // Search
-                _buildIconButton(
-                  context: context,
+                const SizedBox(width: 2),
+                _HeaderIcon(
                   icon: Icons.search_rounded,
                   onTap: () => context.push('/search'),
                 ),
-
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
 
                 // Profile
                 GestureDetector(
                   onTap: () => context.push('/settings/account'),
                   child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
+                    width: 34,
+                    height: 34,
+                    decoration: const BoxDecoration(
                       gradient: AppTheme.primaryGradient,
                       shape: BoxShape.circle,
                     ),
@@ -116,8 +103,8 @@ class GlassmorphismHeader extends ConsumerWidget {
                             .toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -130,57 +117,89 @@ class GlassmorphismHeader extends ConsumerWidget {
       ),
     )
         .animate()
-        .fadeIn(duration: const Duration(milliseconds: 400))
-        .slideY(begin: -0.4, end: 0, duration: const Duration(milliseconds: 400));
-  }
-
-  Widget _buildIconButton({
-    required BuildContext context,
-    required IconData icon,
-    required VoidCallback onTap,
-    int badgeCount = 0,
-  }) {
-    return IconButton(
-      onPressed: onTap,
-      visualDensity: VisualDensity.compact,
-      icon: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(icon, color: AppTheme.textPrimary, size: 25),
-          if (badgeCount > 0)
-            Positioned(
-              right: -4,
-              top: -4,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
-                decoration: const BoxDecoration(
-                  color: AppTheme.errorColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    badgeCount > 99 ? '99+' : '$badgeCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      height: 1,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+        .fadeIn(duration: AppTheme.motionMedium)
+        .slideY(
+          begin: -0.5,
+          end: 0,
+          duration: AppTheme.motionMedium,
+          curve: AppTheme.motionCurve,
+        );
   }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning 👋';
-    if (hour < 17) return 'Good Afternoon ☀️';
-    if (hour < 21) return 'Good Evening 🌅';
-    return 'Good Night 🌙';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
+  }
+}
+
+class _HeaderIcon extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final int badgeCount;
+
+  const _HeaderIcon({
+    required this.icon,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
+
+  @override
+  State<_HeaderIcon> createState() => _HeaderIconState();
+}
+
+class _HeaderIconState extends State<_HeaderIcon> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.85 : 1.0,
+        duration: AppTheme.motionFast,
+        curve: AppTheme.motionCurve,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(widget.icon, color: AppTheme.textPrimary, size: 23),
+              if (widget.badgeCount > 0)
+                Positioned(
+                  right: -3,
+                  top: -3,
+                  child: AnimatedContainer(
+                    duration: AppTheme.motionFast,
+                    padding: const EdgeInsets.all(3.5),
+                    constraints:
+                        const BoxConstraints(minWidth: 16, minHeight: 16),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.badgeCount > 99 ? '99+' : '${widget.badgeCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
