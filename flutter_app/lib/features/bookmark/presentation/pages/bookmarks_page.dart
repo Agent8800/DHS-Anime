@@ -40,7 +40,7 @@ class _BookmarksPageState extends ConsumerState<BookmarksPage>
             Padding(
               padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
-                'My Library',
+                'Watching',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -68,8 +68,8 @@ class _BookmarksPageState extends ConsumerState<BookmarksPage>
                 unselectedLabelColor: AppTheme.textSecondary,
                 labelStyle: TextStyle(fontWeight: FontWeight.w600),
                 tabs: [
-                  Tab(text: 'Bookmarks'),
                   Tab(text: 'Continue Watching'),
+                  Tab(text: 'Bookmarks'),
                 ],
               ),
             ).animate().fadeIn(duration: Duration(milliseconds: 400)),
@@ -79,8 +79,8 @@ class _BookmarksPageState extends ConsumerState<BookmarksPage>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildBookmarksList(),
                   _buildContinueWatchingList(),
+                  _buildBookmarksList(),
                 ],
               ),
             ),

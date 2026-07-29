@@ -79,11 +79,6 @@ class GlassmorphismHeader extends ConsumerWidget {
                   badgeCount: unread,
                   onTap: () => context.push('/notifications'),
                 ),
-                const SizedBox(width: 2),
-                _HeaderIcon(
-                  icon: Icons.search_rounded,
-                  onTap: () => context.push('/search'),
-                ),
                 const SizedBox(width: 10),
 
                 // Profile

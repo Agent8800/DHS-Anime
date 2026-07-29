@@ -78,10 +78,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
+        automaticallyImplyLeading: false,
         actions: [
           if (state.notifications.any((n) => n['isRead'] != true))
             TextButton(

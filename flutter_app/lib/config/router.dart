@@ -112,6 +112,28 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
 
+          // Notifications (Alerts tab)
+          GoRoute(
+            path: '/notifications',
+            pageBuilder: (context, state) => CustomTransitionPage(
+              child: const NotificationsPage(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                );
+                return FadeTransition(
+                  opacity: curved,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.02), end: Offset.zero)
+                        .animate(curved),
+                    child: child,
+                  ),
+                );
+              },
+            ),
+          ),
+
           // Settings
           GoRoute(
             path: '/settings',
@@ -175,12 +197,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/downloads',
         builder: (context, state) => const DownloadsPage(),
-      ),
-
-      // Notification Center (bell icon in the floating header)
-      GoRoute(
-        path: '/notifications',
-        builder: (context, state) => const NotificationsPage(),
       ),
 
       // Theme Settings

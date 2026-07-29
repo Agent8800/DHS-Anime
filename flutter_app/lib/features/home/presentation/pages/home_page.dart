@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/animated_pressable.dart';
 import '../../../notification/presentation/providers/notification_provider.dart';
 import '../widgets/banner_slider.dart';
 import '../widgets/section_header.dart';
-import '../widgets/anime_card.dart';
-import '../widgets/continue_watching_card.dart';
 import '../widgets/glassmorphism_header.dart';
 
+/// Home — hero banner + every released donghua in one clean grid.
+/// Continue Watching lives in the Watching tab; browsing lives in Search.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -48,88 +48,52 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final headerHeight = MediaQuery.of(context).padding.top + 72;
+    final headerHeight = MediaQuery.of(context).padding.top + 68;
 
     return Scaffold(
       body: Stack(
         children: [
           CustomScrollView(
             controller: _scrollController,
-            physics: BouncingScrollPhysics(),
+            physics: const BouncingScrollPhysics(),
             slivers: [
               // Space under the floating header
-              SliverToBoxAdapter(
-                child: SizedBox(height: headerHeight),
-              ),
+              SliverToBoxAdapter(child: SizedBox(height: headerHeight)),
 
-              // Banner Slider
-              SliverToBoxAdapter(
-                child: BannerSlider(),
-              ),
+              // Hero banner
+              const SliverToBoxAdapter(child: BannerSlider()),
 
-              // Continue Watching
+              // Section title
               SliverToBoxAdapter(
-                child: _buildContinueWatching(),
-              ),
-
-              // Recently Updated
-              SliverToBoxAdapter(
-                child: _buildAnimeSection(
-                  'Recently Updated',
-                  _getDummyAnimeList(),
+                child: const SectionHeader(
+                  title: 'All Releases',
+                  trailing: _ReleaseCount(),
                 ),
               ),
 
-              // Trending Now
-              SliverToBoxAdapter(
-                child: _buildAnimeSection(
-                  'Trending Now',
-                  _getDummyAnimeList(),
-                ),
-              ),
-
-              // Popular
-              SliverToBoxAdapter(
-                child: _buildAnimeSection(
-                  'Popular',
-                  _getDummyAnimeList(),
-                ),
-              ),
-
-              // Latest Episodes
-              SliverToBoxAdapter(
-                child: _buildLatestEpisodes(),
-              ),
-
-              // Genres
-              SliverToBoxAdapter(
-                child: _buildGenres(),
-              ),
-
-              // Top Rated
-              SliverToBoxAdapter(
-                child: _buildAnimeSection(
-                  'Top Rated',
-                  _getDummyAnimeList(),
-                ),
-              ),
-
-              // Random Picks
-              SliverToBoxAdapter(
-                child: _buildAnimeSection(
-                  'Random Picks',
-                  _getDummyAnimeList(),
+              // All released donghua — one poster grid
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverGrid.builder(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 0.48,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: _releases.length,
+                  itemBuilder: (context, index) =>
+                      _ReleaseCard(anime: _releases[index]),
                 ),
               ),
 
               // Bottom padding for floating nav
-              SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 110)),
             ],
           ),
 
-          // Floating glass header — hovers above the feed
+          // Floating glass header
           Positioned(
             top: 0,
             left: 0,
@@ -140,174 +104,150 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     );
   }
+}
 
-  Widget _buildContinueWatching() {
-    // Dummy continue watching data
-    final items = List.generate(5, (index) => index);
+class _ReleaseCount extends StatelessWidget {
+  const _ReleaseCount();
 
-    if (items.isEmpty) return SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'Continue Watching',
-          onSeeAll: () {},
-        ),
-        SizedBox(
-          height: 180,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              return ContinueWatchingCard(
-                title: 'Battle Through The Heavens',
-                episode: 'Episode ${index + 5}',
-                progress: (index + 1) * 0.15,
-                imageUrl: 'https://via.placeholder.com/300x170',
-                onTap: () => context.push('/anime/anime_1'),
-              );
-            },
-          ),
-        ),
-      ],
-    ).animate().fadeIn(duration: Duration(milliseconds: 500));
-  }
-
-  Widget _buildAnimeSection(String title, List<Map<String, dynamic>> animeList) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: title,
-          onSeeAll: () {},
-        ),
-        SizedBox(
-          height: 250,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: animeList.length,
-            itemBuilder: (context, index) {
-              final anime = animeList[index];
-              return AnimeCard(
-                title: anime['title'],
-                imageUrl: anime['image'],
-                rating: anime['rating'],
-                onTap: () => context.push('/anime/${anime['id']}'),
-              );
-            },
-          ),
-        ),
-      ],
-    ).animate().fadeIn(duration: Duration(milliseconds: 500));
-  }
-
-  Widget _buildLatestEpisodes() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'Latest Episodes',
-          onSeeAll: () {},
-        ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          itemCount: 5,
-          itemBuilder: (context, index) {
-            return Card(
-              margin: EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                contentPadding: EdgeInsets.all(12),
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: CachedNetworkImage(
-                    imageUrl: 'https://via.placeholder.com/120x80',
-                    width: 100,
-                    height: 70,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: AppTheme.cardColor,
-                      highlightColor: AppTheme.surfaceColor,
-                      child: Container(color: AppTheme.cardColor),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      width: 100,
-                      height: 70,
-                      color: AppTheme.cardColor,
-                      child: Icon(Icons.error),
-                    ),
-                  ),
-                ),
-                title: Text(
-                  'Douluo Continent - Ep ${index + 1}',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  'Hindi • 1080p',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-                ),
-                trailing: Icon(
-                  Icons.download_for_offline_outlined,
-                  color: AppTheme.primaryColor,
-                ),
-                onTap: () => context.push('/anime/douluo_continent'),
-              ),
-            );
-          },
-        ),
-      ],
-    ).animate().fadeIn(duration: Duration(milliseconds: 500));
-  }
-
-  Widget _buildGenres() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'Browse by Genre',
-          onSeeAll: () {},
-        ),
-        SizedBox(
-          height: 45,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: 10,
-            itemBuilder: (context, index) {
-              final genres = ['Action', 'Fantasy', 'Martial Arts', 'Xianxia', 'Drama', 'Comedy', 'Romance', 'Sci-Fi', 'Adventure', 'Cultivation'];
-              return Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Chip(
-                  label: Text(genres[index]),
-                  backgroundColor: AppTheme.primaryColor.withOpacity(0.15),
-                  labelStyle: TextStyle(color: AppTheme.primaryColor),
-                  side: BorderSide.none,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-              );
-            },
-          ),
-        ),
-        SizedBox(height: 24),
-      ],
-    ).animate().fadeIn(duration: Duration(milliseconds: 500));
-  }
-
-  List<Map<String, dynamic>> _getDummyAnimeList() {
-    return List.generate(10, (index) => {
-      'id': 'anime_$index',
-      'title': 'Anime Title ${index + 1}',
-      'image': 'https://via.placeholder.com/200x280',
-      'rating': (7 + index * 0.3).toStringAsFixed(1),
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '${_releases.length} titles',
+      style: const TextStyle(fontSize: 12, color: AppTheme.textHint),
+    );
   }
 }
+
+class _ReleaseCard extends StatelessWidget {
+  final Map<String, dynamic> anime;
+
+  const _ReleaseCard({required this.anime});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedPressable(
+      onTap: () => context.push('/anime/${anime['id']}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Poster
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                boxShadow: AppTheme.shadowMd,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: anime['image'] as String,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: AppTheme.cardColor,
+                        highlightColor: AppTheme.surfaceColor,
+                        child: Container(color: AppTheme.cardColor),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: AppTheme.cardColor,
+                        child: const Center(
+                          child: Icon(Icons.movie_rounded,
+                              size: 34, color: AppTheme.textHint),
+                        ),
+                      ),
+                    ),
+
+                    // Rating badge
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.65),
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star_rounded,
+                                color: AppTheme.warningColor, size: 12),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${anime['rating']}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 7),
+
+          // Title + status
+          Text(
+            anime['title'] as String,
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+              height: 1.2,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Ep ${anime['episodes']} · ${anime['status']}',
+            style: const TextStyle(fontSize: 10.5, color: AppTheme.textHint),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Released donghua (placeholder data until the API feed is wired —
+/// swap with GET /api/anime?sort=newest).
+final List<Map<String, dynamic>> _releases = List.generate(
+  15,
+  (index) => {
+    'id': 'anime_$index',
+    'title': [
+      'Battle Through the Heavens',
+      'Soul Land 2',
+      'Swallowed Star',
+      'Perfect World',
+      'The Great Ruler',
+      'Martial Universe',
+      'Throne of Seal',
+      'Tales of Demons and Gods',
+      'Stellar Transformation',
+      'A Will Eternal',
+      'Renegade Immortal',
+      'Jade Dynasty',
+      'Fighting Spirit',
+      'Spirit Sword Sovereign',
+      'Demonic Ancestor',
+    ][index],
+    'image': 'https://via.placeholder.com/200x280',
+    'rating': (9.2 - index * 0.3).toStringAsFixed(1),
+    'episodes': 12 + index * 3,
+    'status': index % 3 == 0 ? 'Ongoing' : 'Completed',
+  },
+);

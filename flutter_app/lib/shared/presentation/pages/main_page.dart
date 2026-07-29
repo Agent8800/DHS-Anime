@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/notification/presentation/providers/notification_provider.dart';
 
 /// Shell with a floating glass tab bar — thumb-reachable, background
 /// blurs behind it, active tab gets an ember-lit pill with a soft glow.
@@ -24,6 +25,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home', path: '/'),
     _NavItem(icon: Icons.search_rounded, activeIcon: Icons.search_rounded, label: 'Search', path: '/search'),
     _NavItem(icon: Icons.play_circle_outline_rounded, activeIcon: Icons.play_circle_rounded, label: 'Watching', path: '/watching'),
+    _NavItem(icon: Icons.notifications_none_rounded, activeIcon: Icons.notifications_rounded, label: 'Alerts', path: '/notifications'),
     _NavItem(icon: Icons.tune_rounded, activeIcon: Icons.tune_rounded, label: 'Settings', path: '/settings'),
   ];
 
@@ -47,12 +49,17 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final unread = ref.watch(
+      notificationCenterProvider.select((s) => s.unreadCount),
+    );
+
     return Scaffold(
       extendBody: true,
       body: widget.child,
       bottomNavigationBar: _FloatingTabBar(
         items: _navItems,
         currentIndex: _currentIndex,
+        unreadAlerts: unread,
         onTap: _onTap,
       ),
     );
@@ -62,11 +69,13 @@ class _MainPageState extends ConsumerState<MainPage> {
 class _FloatingTabBar extends StatelessWidget {
   final List<_NavItem> items;
   final int currentIndex;
+  final int unreadAlerts;
   final ValueChanged<int> onTap;
 
   const _FloatingTabBar({
     required this.items,
     required this.currentIndex,
+    required this.unreadAlerts,
     required this.onTap,
   });
 
@@ -103,6 +112,8 @@ class _FloatingTabBar extends StatelessWidget {
                   child: _TabItem(
                     item: item,
                     isActive: isActive,
+                    badgeCount:
+                        item.path == '/notifications' ? unreadAlerts : 0,
                     onTap: () => onTap(index),
                   ),
                 );
@@ -126,11 +137,13 @@ class _FloatingTabBar extends StatelessWidget {
 class _TabItem extends StatefulWidget {
   final _NavItem item;
   final bool isActive;
+  final int badgeCount;
   final VoidCallback onTap;
 
   const _TabItem({
     required this.item,
     required this.isActive,
+    this.badgeCount = 0,
     required this.onTap,
   });
 
@@ -184,11 +197,45 @@ class _TabItemState extends State<_TabItem> {
                   scale: animation,
                   child: child,
                 ),
-                child: Icon(
-                  widget.isActive ? widget.item.activeIcon : widget.item.icon,
+                child: Stack(
                   key: ValueKey(widget.isActive),
-                  color: color,
-                  size: 23,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      widget.isActive
+                          ? widget.item.activeIcon
+                          : widget.item.icon,
+                      color: color,
+                      size: 23,
+                    ),
+                    if (widget.badgeCount > 0)
+                      Positioned(
+                        right: -7,
+                        top: -5,
+                        child: Container(
+                          padding: const EdgeInsets.all(3.5),
+                          constraints: const BoxConstraints(
+                              minWidth: 16, minHeight: 16),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              widget.badgeCount > 99
+                                  ? '99+'
+                                  : '${widget.badgeCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w700,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
