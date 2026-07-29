@@ -44,17 +44,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF121212),
-              Color(0xFF1E1E2E),
-              Color(0xFF121212),
-            ],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -103,11 +93,11 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
             // Tagline
             Text(
-              'Stream Your Favorite Donghua',
+              'Your Donghua. Offline.',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: AppTheme.textSecondary,
-                letterSpacing: 0.5,
+                letterSpacing: 0.2,
               ),
             )
                 .animate(delay: Duration(milliseconds: 500))

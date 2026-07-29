@@ -19,22 +19,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<_OnboardingItem> _items = [
     _OnboardingItem(
+      icon: Icons.download_for_offline_rounded,
+      title: 'Download Episodes',
+      description: 'Fast mirror downloads to your DHS Anime folder.',
+      color: AppTheme.primaryColor,
+    ),
+    _OnboardingItem(
       icon: Icons.play_circle_fill_rounded,
-      title: 'Stream Donghua',
-      description: 'Watch your favorite Chinese animated series in high quality with subtitles in your language.',
-      color: Color(0xFF6C63FF),
+      title: 'Watch Offline',
+      description: 'Play downloads anywhere. No internet needed.',
+      color: AppTheme.secondaryColor,
     ),
     _OnboardingItem(
-      icon: Icons.download_rounded,
-      title: 'Download & Watch Offline',
-      description: 'Download episodes to watch later without an internet connection. Perfect for travel!',
-      color: Color(0xFF03DAC6),
-    ),
-    _OnboardingItem(
-      icon: Icons.star_rounded,
-      title: 'Premium Experience',
-      description: 'Go premium for ad-free streaming, no shorteners, exclusive quality, and priority servers.',
-      color: Color(0xFFFF6584),
+      icon: Icons.notifications_active_rounded,
+      title: 'Never Miss an Episode',
+      description: 'Alerts for new episodes and donghua.',
+      color: AppTheme.warningColor,
     ),
   ];
 
@@ -67,16 +67,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1E1E2E),
-              Color(0xFF121212),
-            ],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.darkGradient),
         child: SafeArea(
           child: Column(
             children: [

@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const Premium = require('../models/Premium');
+const PremiumCode = require('../models/PremiumCode');
 const { generateToken } = require('../middleware/auth');
 
 /**
@@ -50,6 +52,8 @@ const syncUser = async (req, res) => {
           avatar: user.avatar,
           role: user.role,
           isPremium: user.isPremiumActive,
+          premiumType: user.premiumType,
+          premiumExpiry: user.premiumExpiry,
           preferences: user.preferences
         },
         token
@@ -237,6 +241,93 @@ const updateFCMToken = async (req, res) => {
   }
 };
 
+/**
+ * Redeem a premium activation code.
+ * Free users must solve the shortener before every download; redeeming a
+ * code upgrades the account so downloads are served instantly. Codes are
+ * single-use and stack with an existing active premium period.
+ */
+const redeemPremiumCode = async (req, res) => {
+  try {
+    const raw = (req.body.code || '').toString().trim().toUpperCase();
+    if (!raw) {
+      return res.status(400).json({
+        success: false,
+        message: 'Activation code is required'
+      });
+    }
+
+    const code = await PremiumCode.findOne({ code: raw });
+    if (!code) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid activation code'
+      });
+    }
+    if (code.isUsed) {
+      return res.status(400).json({
+        success: false,
+        message: 'This code has already been redeemed'
+      });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Stack on top of the current period when premium is still active
+    const now = new Date();
+    const stillActive = user.premiumType !== 'none' &&
+      user.premiumExpiry &&
+      user.premiumExpiry > now;
+    const base = stillActive ? user.premiumExpiry : now;
+    const newExpiry = new Date(base.getTime() + code.durationDays * 24 * 60 * 60 * 1000);
+
+    user.premiumType = 'monthly';
+    user.premiumExpiry = newExpiry;
+    user.isPremium = true;
+    await user.save();
+
+    code.isUsed = true;
+    code.usedBy = user._id;
+    code.usedAt = now;
+    await code.save();
+
+    // Audit record alongside admin-granted premium entries
+    await Premium.create({
+      user: user._id,
+      type: 'monthly',
+      startDate: now,
+      expiryDate: newExpiry,
+      isActive: true,
+      paymentMethod: 'manual',
+      amount: 0,
+      grantedBy: 'redeem-code',
+      notes: `Code ${code.code} (${code.durationDays} days)`
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Premium activated for ${code.durationDays} days`,
+      data: {
+        isPremium: true,
+        premiumType: user.premiumType,
+        premiumExpiry: user.premiumExpiry
+      }
+    });
+  } catch (error) {
+    console.error('Redeem premium code error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to redeem code'
+    });
+  }
+};
+
 module.exports = {
   syncUser,
   getProfile,
@@ -244,5 +335,6 @@ module.exports = {
   registerDevice,
   getDevices,
   removeDevice,
-  updateFCMToken
+  updateFCMToken,
+  redeemPremiumCode
 };

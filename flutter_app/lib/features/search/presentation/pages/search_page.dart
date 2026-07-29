@@ -1,9 +1,13 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../config/api_config.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 
@@ -20,6 +24,11 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   String _searchQuery = '';
   bool _showFilters = false;
 
+  // Live search state (debounced as-you-type results)
+  Timer? _debounce;
+  bool _isSearching = false;
+  List<Map<String, dynamic>>? _liveResults;
+
   // Filter state
   String? _selectedGenre;
   String? _selectedStatus;
@@ -34,9 +43,79 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    setState(() => _searchQuery = value);
+
+    final query = value.trim();
+    if (query.length < 2) {
+      setState(() {
+        _liveResults = null;
+        _isSearching = false;
+      });
+      return;
+    }
+    // Live search — wait a beat after the last keystroke, then query.
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _runLiveSearch(query);
+    });
+  }
+
+  /// Re-run the current query after a filter/sort change.
+  void _research() {
+    final query = _searchController.text.trim();
+    if (query.length < 2) return;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      _runLiveSearch(query);
+    });
+  }
+
+  Future<void> _runLiveSearch(String query) async {
+    if (!mounted) return;
+    setState(() => _isSearching = true);
+
+    try {
+      final dio = Dio(BaseOptions(
+        baseUrl: ApiConfig.baseUrl,
+        connectTimeout: const Duration(milliseconds: 8000),
+        receiveTimeout: const Duration(milliseconds: 8000),
+      ));
+      final response = await dio.get(
+        '${ApiConfig.anime}/search',
+        queryParameters: {
+          'q': query,
+          'limit': 24,
+          if (_selectedGenre != null) 'genre': _selectedGenre,
+          if (_selectedStatus != null) 'status': _selectedStatus,
+          if (_selectedYear != null) 'year': _selectedYear,
+          'sort': _sortBy,
+        },
+      );
+
+      final data = response.data['data'];
+      final List raw = (data is Map ? data['results'] : data) as List? ?? [];
+      if (!mounted || _searchQuery.trim() != query) return;
+      setState(() {
+        _liveResults = raw
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        _isSearching = false;
+      });
+    } catch (_) {
+      // Backend offline (dev/demo) — keep the demo grid, stop the spinner
+      if (!mounted) return;
+      setState(() {
+        _liveResults = null;
+        _isSearching = false;
+      });
+    }
   }
 
   @override
@@ -83,25 +162,43 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 focusNode: _searchFocus,
                 style: TextStyle(color: AppTheme.textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Search anime, episodes...',
+                  hintText: 'Search donghua…',
                   prefixIcon: Icon(Icons.search, color: AppTheme.textHint),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, color: AppTheme.textHint),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
+                  suffixIcon: _isSearching
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
                         )
-                      : null,
+                      : _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: AppTheme.textHint),
+                              onPressed: () {
+                                _debounce?.cancel();
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                  _liveResults = null;
+                                  _isSearching = false;
+                                });
+                              },
+                            )
+                          : null,
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
-                onChanged: (value) {
-                  setState(() => _searchQuery = value);
-                },
+                onChanged: _onQueryChanged,
                 onSubmitted: (value) {
-                  _saveRecentSearch(value);
+                  _debounce?.cancel();
+                  final query = value.trim();
+                  if (query.length >= 2) _runLiveSearch(query);
+                  _saveRecentSearch(query);
                 },
               ),
             ),
@@ -163,6 +260,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       setState(() {
                         _selectedGenre = selected ? genre : null;
                       });
+                      _research();
                     },
                     selectedColor: AppTheme.primaryColor.withOpacity(0.2),
                     labelStyle: TextStyle(
@@ -206,6 +304,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                             setState(() {
                               _selectedStatus = selected ? status : null;
                             });
+                            _research();
                           },
                           selectedColor: AppTheme.primaryColor.withOpacity(0.2),
                           labelStyle: TextStyle(
@@ -253,6 +352,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       onChanged: (value) {
                         if (value != null) {
                           setState(() => _sortBy = value);
+                          _research();
                         }
                       },
                     ),
@@ -312,7 +412,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
           // Trending
           Text(
-            'Trending Searches 🔥',
+            'Trending Searches',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -356,18 +456,74 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 
   Widget _buildSearchResults() {
+    final results = _liveResults;
+
+    return Column(
+      children: [
+        // Thin live-search indicator
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: _isSearching ? 2 : 0,
+          child: _isSearching
+              ? const LinearProgressIndicator(
+                  color: AppTheme.primaryColor,
+                  backgroundColor: Colors.transparent,
+                  minHeight: 2,
+                )
+              : const SizedBox.shrink(),
+        ),
+        Expanded(
+          child: results != null
+              ? (results.isEmpty
+                  ? _buildNoResults()
+                  : _buildResultGrid(
+                      results
+                          .map((r) => _SearchResult(
+                                id: (r['_id'] ?? r['id'] ?? '').toString(),
+                                title: (r['title'] ?? '').toString(),
+                                poster: (r['poster'] ?? '').toString(),
+                                status: (r['status'] ?? 'Ongoing').toString(),
+                              ))
+                          .toList(),
+                    ))
+              : _buildResultGrid(_demoResults),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_rounded,
+              size: 64, color: AppTheme.textHint.withOpacity(0.35)),
+          const SizedBox(height: 12),
+          Text(
+            'No results for "$_searchQuery"',
+            style: const TextStyle(color: AppTheme.textHint, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultGrid(List<_SearchResult> items) {
     return GridView.builder(
-      padding: EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         childAspectRatio: 0.55,
         crossAxisSpacing: 12,
         mainAxisSpacing: 16,
       ),
-      itemCount: 15,
+      itemCount: items.length,
       itemBuilder: (context, index) {
+        final item = items[index];
+        final isOngoing = item.status.toLowerCase() == 'ongoing';
         return GestureDetector(
-          onTap: () => context.push('/anime/search_$index'),
+          onTap: () => context.push('/anime/${item.id}'),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -379,33 +535,61 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
                         blurRadius: 8,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: 'https://via.placeholder.com/150x210/6C63FF/FFFFFF?text=${index + 1}',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor: AppTheme.cardColor,
-                        highlightColor: AppTheme.surfaceColor,
-                        child: Container(color: AppTheme.cardColor),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppTheme.cardColor,
-                        child: Icon(Icons.movie, color: AppTheme.textHint),
-                      ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: item.poster,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          placeholder: (context, url) => Shimmer.fromColors(
+                            baseColor: AppTheme.cardColor,
+                            highlightColor: AppTheme.surfaceColor,
+                            child: Container(color: AppTheme.cardColor),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: AppTheme.cardColor,
+                            child: Icon(Icons.movie, color: AppTheme.textHint),
+                          ),
+                        ),
+                        Positioned(
+                          top: 6,
+                          left: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isOngoing
+                                  ? AppTheme.primaryColor
+                                  : const Color(0xFF3ECF8E),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              item.status.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.7,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                'Search Result ${index + 1}',
-                style: TextStyle(
+                item.title,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary,
@@ -413,30 +597,42 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(Icons.star, color: Colors.amber, size: 14),
-                  SizedBox(width: 4),
-                  Text(
-                    '${(7 + index * 0.2).toStringAsFixed(1)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         );
       },
-    ).animate().fadeIn(duration: Duration(milliseconds: 400));
+    ).animate().fadeIn(duration: const Duration(milliseconds: 250));
   }
+
+  // Placeholder results shown when the backend is unreachable (dev/demo)
+  static final List<_SearchResult> _demoResults = List.generate(
+    15,
+    (index) => _SearchResult(
+      id: 'search_$index',
+      title: 'Search Result ${index + 1}',
+      poster:
+          'https://via.placeholder.com/150x210/22222B/FFFFFF?text=${index + 1}',
+      status: index % 3 == 0 ? 'Completed' : 'Ongoing',
+    ),
+  );
 
   void _saveRecentSearch(String query) {
     if (query.isNotEmpty) {
       // Save to Hive
     }
   }
+}
+
+class _SearchResult {
+  final String id;
+  final String title;
+  final String poster;
+  final String status;
+
+  const _SearchResult({
+    required this.id,
+    required this.title,
+    required this.poster,
+    required this.status,
+  });
 }

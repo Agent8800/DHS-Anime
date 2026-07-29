@@ -22,6 +22,45 @@ const videoSourceSchema = new mongoose.Schema({
   }
 }, { _id: true });
 
+/**
+ * Third-party download link (Mega, GDrive, Telegram, etc.)
+ * Episodes are NOT streamed in-app anymore — users download
+ * through these external hosts and play the file with the
+ * built-in offline player.
+ */
+const downloadLinkSchema = new mongoose.Schema({
+  host: {
+    type: String,
+    required: true,
+    trim: true // e.g. 'mega', 'gdrive', 'terabox', 'telegram', 'direct'
+  },
+  label: {
+    type: String,
+    default: '' // e.g. 'Mega HD', 'GDrive Mirror 1'
+  },
+  url: {
+    type: String,
+    required: true
+  },
+  quality: {
+    type: String,
+    enum: ['360p', '480p', '720p', '1080p', '4K'],
+    default: '720p'
+  },
+  fileSize: {
+    type: Number, // in bytes
+    default: 0
+  },
+  language: {
+    type: String,
+    default: 'Hindi'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
+}, { _id: true });
+
 const subtitleSchema = new mongoose.Schema({
   language: {
     type: String,
@@ -67,7 +106,8 @@ const episodeSchema = new mongoose.Schema({
     url: String,
     publicId: String
   },
-  sources: [videoSourceSchema],
+  sources: [videoSourceSchema], // legacy — kept for backward compatibility, not sent to the app
+  downloadLinks: [downloadLinkSchema], // third-party download links shown in the app
   subtitles: [subtitleSchema],
   language: {
     type: String,
@@ -114,10 +154,7 @@ episodeSchema.methods.incrementViews = function() {
   return this.save({ validateBeforeSave: false });
 };
 
-// Get stream URL (signed)
-episodeSchema.methods.getStreamUrl = function(quality = '1080p') {
-  const source = this.sources.find(s => s.quality === quality) || this.sources[0];
-  return source ? source.url : null;
-};
+// Streaming has been removed from the app — episodes are
+// delivered as downloads only. See downloadLinks above.
 
 module.exports = mongoose.model('Episode', episodeSchema);

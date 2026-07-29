@@ -8,6 +8,9 @@ const Report = require('../models/Report');
 const WatchHistory = require('../models/WatchHistory');
 const Download = require('../models/Download');
 const AppSettings = require('../models/AppSettings');
+const PremiumCode = require('../models/PremiumCode');
+const crypto = require('crypto');
+const notificationService = require('../services/notificationService');
 const axios = require('axios');
 
 /**
@@ -343,6 +346,12 @@ const createAnime = async (req, res) => {
 
     await anime.save();
 
+    // Notify every user about the new donghua (push + in-app bell icon).
+    // Fire-and-forget: never blocks or fails the admin response.
+    notificationService
+      .notifyNewDonghua(req.app.get('io'), anime)
+      .catch((err) => console.error('New donghua notification error:', err));
+
     res.status(201).json({
       success: true,
       data: { anime },
@@ -515,6 +524,41 @@ const deleteFolder = async (req, res) => {
 };
 
 /**
+ * Get all episodes of an anime WITH download links.
+ * Used by the admin mirror-link editor (never exposed publicly).
+ */
+const getEpisodesByAnime = async (req, res) => {
+  try {
+    const { animeId } = req.params;
+
+    const anime = await Anime.findById(animeId).select('title poster status totalEpisodes');
+    if (!anime) {
+      return res.status(404).json({ success: false, message: 'Anime not found' });
+    }
+
+    const episodes = await Episode.find({ anime: animeId })
+      .sort({ episodeNumber: 1 })
+      .select('episodeNumber title folder language duration isActive downloadLinks downloadCount viewCount');
+
+    // Folders too, so the panel can assign new episodes to one
+    const folders = await Folder.find({ anime: animeId })
+      .sort({ order: 1 })
+      .select('name episodeRange order');
+
+    res.status(200).json({
+      success: true,
+      data: { anime, episodes, folders }
+    });
+  } catch (error) {
+    console.error('Get episodes by anime error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get episodes'
+    });
+  }
+};
+
+/**
  * Create episode
  */
 const createEpisode = async (req, res) => {
@@ -527,6 +571,7 @@ const createEpisode = async (req, res) => {
       description,
       thumbnail,
       sources,
+      downloadLinks,
       subtitles,
       language,
       duration,
@@ -553,6 +598,7 @@ const createEpisode = async (req, res) => {
       description,
       thumbnail,
       sources,
+      downloadLinks: downloadLinks || [],
       subtitles,
       language: language || 'Hindi',
       duration,
@@ -567,6 +613,12 @@ const createEpisode = async (req, res) => {
     // Update anime total episodes
     const totalEpisodes = await Episode.countDocuments({ anime: animeId, isActive: true });
     await Anime.findByIdAndUpdate(animeId, { totalEpisodes });
+
+    // Notify every user about the new episode (push + in-app bell icon).
+    // Fire-and-forget: never blocks or fails the admin response.
+    notificationService
+      .notifyNewEpisode(req.app.get('io'), episode, anime)
+      .catch((err) => console.error('New episode notification error:', err));
 
     res.status(201).json({
       success: true,
@@ -1024,8 +1076,164 @@ const getSettings = async (req, res) => {
   }
 };
 
+/**
+ * Generate a batch of premium activation codes (dev shares these with
+ * users; a code is redeemed once in the app and extends premium).
+ */
+const generatePremiumCodes = async (req, res) => {
+  try {
+    const count = Math.min(Math.max(parseInt(req.body.count, 10) || 1, 1), 50);
+    const durationDays = Math.min(Math.max(parseInt(req.body.durationDays, 10) || 30, 1), 3650);
+    const note = (req.body.note || '').toString().slice(0, 120);
+
+    const segment = () => crypto.randomBytes(3).toString('hex').toUpperCase();
+    const created = [];
+    let guard = 0;
+    while (created.length < count && guard < count * 5) {
+      guard += 1;
+      const code = `DHS-${segment()}-${segment()}`;
+      try {
+        // Sequential insert so a rare duplicate-key collision just retries
+        // eslint-disable-next-line no-await-in-loop
+        const doc = await PremiumCode.create({
+          code,
+          durationDays,
+          note,
+          createdBy: req.user?.email || 'admin'
+        });
+        created.push(doc);
+      } catch (err) {
+        if (err.code !== 11000) throw err;
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      data: {
+        count: created.length,
+        codes: created
+      }
+    });
+  } catch (error) {
+    console.error('Generate premium codes error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate codes'
+    });
+  }
+};
+
+/**
+ * Latest codes with redemption status (admin panel table).
+ */
+const listPremiumCodes = async (req, res) => {
+  try {
+    const codes = await PremiumCode.find()
+      .populate('usedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: { codes }
+    });
+  } catch (error) {
+    console.error('List premium codes error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to list codes'
+    });
+  }
+};
+
+/**
+ * Delete an unused code. Redeemed codes are kept for the audit trail.
+ */
+const deletePremiumCode = async (req, res) => {
+  try {
+    const code = await PremiumCode.findById(req.params.id);
+    if (!code) {
+      return res.status(404).json({
+        success: false,
+        message: 'Code not found'
+      });
+    }
+    if (code.isUsed) {
+      return res.status(400).json({
+        success: false,
+        message: 'Code already redeemed — cannot delete'
+      });
+    }
+    await code.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Code deleted'
+    });
+  } catch (error) {
+    console.error('Delete premium code error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete code'
+    });
+  }
+};
+
+/**
+ * Focused audience stats for the admin panel dashboard cards:
+ * total users, daily active users, total premium users, active premium.
+ */
+const getUserStats = async (req, res) => {
+  try {
+    const now = new Date();
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const [
+      totalUsers,
+      dailyActiveUsers,
+      totalPremiumUsers,
+      activePremiumUsers,
+      totalDownloads
+    ] = await Promise.all([
+      User.countDocuments(),
+      // "Daily active" = signed in within the last 24 hours
+      User.countDocuments({ lastLogin: { $gte: dayAgo } }),
+      // Ever had premium granted/redeemed
+      User.countDocuments({ premiumType: { $in: ['monthly', 'lifetime'] } }),
+      // Premium valid right now
+      User.countDocuments({
+        $or: [
+          { premiumType: 'lifetime' },
+          { premiumType: 'monthly', premiumExpiry: { $gt: now } }
+        ]
+      }),
+      Download.countDocuments()
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        dailyActiveUsers,
+        totalPremiumUsers,
+        activePremiumUsers,
+        totalDownloads,
+        generatedAt: now
+      }
+    });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load user stats'
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
+  getUserStats,
   fetchMetadata,
   createAnime,
   updateAnime,
@@ -1034,11 +1242,15 @@ module.exports = {
   updateFolder,
   deleteFolder,
   createEpisode,
+  getEpisodesByAnime,
   updateEpisode,
   deleteEpisode,
   moveEpisodes,
   managePremium,
   revokePremium,
+  generatePremiumCodes,
+  listPremiumCodes,
+  deletePremiumCode,
   createAnnouncement,
   getAnnouncements,
   updateAnnouncement,

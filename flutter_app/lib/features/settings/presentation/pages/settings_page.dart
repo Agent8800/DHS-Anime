@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../download/data/download_service.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -16,9 +17,32 @@ class SettingsPage extends ConsumerStatefulWidget {
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _darkMode = true;
   bool _amoledMode = false;
-  bool _autoPlay = true;
   String _defaultQuality = '1080p';
   String _defaultLanguage = 'Hindi';
+
+  Future<void> _pickDownloadLocation() async {
+    final service = ref.read(downloadServiceProvider);
+    final selected = await service.showLocationPicker(context);
+    if (selected != null) {
+      await service.selectLocation(selected);
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _handleStoragePermission() async {
+    final service = ref.read(downloadServiceProvider);
+    final granted = await service.hasStorageAccess();
+    if (granted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Storage access is already granted')),
+        );
+      }
+      return;
+    }
+    await service.requestStoragePermission();
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +83,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   _buildNavigationTile(
                     icon: Icons.palette_outlined,
                     title: 'Theme & Colors',
-                    subtitle: 'Customize your app appearance',
+                    subtitle: 'Accent, dark & AMOLED',
                     onTap: () => context.push('/settings/theme'),
                   ),
                   _buildSwitchTile(
@@ -82,13 +106,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ],
               ),
 
-              // Player Section
+              // Playback Section (offline, built-in player)
               _buildSection(
-                'Player',
+                'Playback',
                 [
                   _buildDropdownTile(
                     icon: Icons.high_quality,
-                    title: 'Default Quality',
+                    title: 'Preferred Download Quality',
                     value: _defaultQuality,
                     items: ['1080p', '720p', '480p', '360p'],
                     onChanged: (value) {
@@ -97,27 +121,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                   _buildDropdownTile(
                     icon: Icons.translate,
-                    title: 'Default Language',
+                    title: 'Preferred Language',
                     value: _defaultLanguage,
                     items: ['Hindi', 'English', 'Japanese', 'Chinese'],
                     onChanged: (value) {
                       setState(() => _defaultLanguage = value!);
                     },
-                  ),
-                  _buildSwitchTile(
-                    icon: Icons.play_circle_outline,
-                    title: 'Auto Play Next',
-                    subtitle: 'Automatically play next episode',
-                    value: _autoPlay,
-                    onChanged: (value) {
-                      setState(() => _autoPlay = value);
-                    },
-                  ),
-                  _buildNavigationTile(
-                    icon: Icons.subtitles,
-                    title: 'Subtitle Settings',
-                    subtitle: 'Font size, color, background',
-                    onTap: () {},
                   ),
                 ],
               ),
@@ -129,14 +138,25 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   _buildNavigationTile(
                     icon: Icons.download_outlined,
                     title: 'Download Manager',
-                    subtitle: 'Manage your downloads',
-                    onTap: () => context.push('/downloads'),
+                                        onTap: () => context.push('/downloads'),
                   ),
                   _buildNavigationTile(
                     icon: Icons.folder_outlined,
-                    title: 'Download Folder',
-                    subtitle: '/storage/emulated/0/DonghuaHub',
-                    onTap: () {},
+                    title: 'Download Location',
+                    subtitle: ref.watch(downloadServiceProvider).configuredPath,
+                    onTap: _pickDownloadLocation,
+                  ),
+                  _buildNavigationTile(
+                    icon: Icons.sd_storage_outlined,
+                    title: 'Storage Permission',
+                    subtitle: 'For the public DHS Anime folder',
+                    onTap: _handleStoragePermission,
+                  ),
+                  _buildNavigationTile(
+                    icon: Icons.notifications_outlined,
+                    title: 'Notifications',
+                    subtitle: 'Bell feed + push alerts',
+                    onTap: () => context.push('/notifications'),
                   ),
                 ],
               ),
@@ -148,7 +168,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   _buildNavigationTile(
                     icon: Icons.delete_outline,
                     title: 'Clear Cache',
-                    subtitle: '128 MB cached',
+                    
                     onTap: () => _showClearCacheDialog(),
                   ),
                   _buildNavigationTile(
@@ -228,6 +248,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _buildAccountTile() {
+    final auth = ref.watch(authServiceProvider);
+    final displayName = auth.name.isNotEmpty ? auth.name : 'User';
+    final displayEmail = auth.email.isNotEmpty ? auth.email : 'Signed in with Google';
+
     return ListTile(
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: Container(
@@ -239,7 +263,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         child: Center(
           child: Text(
-            'U',
+            displayName.substring(0, 1).toUpperCase(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -249,7 +273,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
       title: Text(
-        'User Name',
+        displayName,
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -257,11 +281,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
       subtitle: Text(
-        'user@example.com',
+        displayEmail,
         style: TextStyle(
           fontSize: 14,
           color: AppTheme.textSecondary,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
       trailing: Container(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -444,11 +470,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             child: Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              final settingsBox = Hive.box(AppConstants.settingsBox);
-              settingsBox.delete(AppConstants.tokenKey);
-              context.go('/login');
+              // Sign out of Clerk (Google) and clear the local session
+              await ref.read(authServiceProvider.notifier).signOut(context);
+              if (mounted) context.go('/login');
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
             child: Text('Logout'),

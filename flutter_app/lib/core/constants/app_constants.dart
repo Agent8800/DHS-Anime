@@ -16,6 +16,8 @@ class AppConstants {
   static const String userNameKey = 'user_name';
   static const String userEmailKey = 'user_email';
   static const String userAvatarKey = 'user_avatar';
+  static const String userIsPremiumKey = 'user_is_premium';
+  static const String userPremiumExpiryKey = 'user_premium_expiry';
   static const String themeKey = 'theme_mode';
   static const String primaryColorKey = 'primary_color';
   static const String amoledModeKey = 'amoled_mode';
@@ -24,6 +26,25 @@ class AppConstants {
   static const String subtitleSizeKey = 'subtitle_size';
   static const String autoPlayKey = 'auto_play';
   static const String firstLaunchKey = 'first_launch';
+  static const String downloadPathKey = 'download_path';
+  static const String downloadLocationNameKey = 'download_location_name';
+  static const String notificationPermissionAskedKey = 'notification_permission_asked';
+
+  // Downloads
+  /// Default folder created on internal storage for downloaded episodes.
+  /// Changeable anytime from Settings → Downloads → Download Location.
+  static const String appFolderName = 'DHS Anime';
+  static const String defaultDownloadDir = '/storage/emulated/0/$appFolderName';
+  static const String downloadFolderInDownloads =
+      '/storage/emulated/0/Download/$appFolderName';
+
+  // Auth — Clerk (Google-only). Set your publishable key here or run the
+  // app with: flutter run --dart-define=CLERK_PUBLISHABLE_KEY=pk_test_...
+  // Email/password authentication is intentionally not supported.
+  static const String clerkPublishableKey = String.fromEnvironment(
+    'CLERK_PUBLISHABLE_KEY',
+    defaultValue: 'pk_test_REPLACE_WITH_YOUR_CLERK_PUBLISHABLE_KEY',
+  );
 
   // Video Qualities
   static const List<String> videoQualities = ['360p', '480p', '720p', '1080p', '4K'];

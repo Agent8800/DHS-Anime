@@ -1,65 +1,99 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Design system — DonghuaHub
+///
+/// Professional streaming-app palette: a near-black neutral canvas
+/// (no hue tint) with a single warm "ember" signature accent.
+/// Text, spacing, radius and motion all come from the tokens below so
+/// every screen feels like one product, not a collage of defaults.
 class AppTheme {
-  // Default colors
-  static const Color primaryColor = Color(0xFF6C63FF);
-  static const Color secondaryColor = Color(0xFF03DAC6);
-  static const Color accentColor = Color(0xFFFF6584);
-  static const Color surfaceColor = Color(0xFF1E1E2E);
-  static const Color backgroundColor = Color(0xFF121212);
-  static const Color cardColor = Color(0xFF2A2A3E);
-  static const Color errorColor = Color(0xFFFF5252);
-  static const Color successColor = Color(0xFF4CAF50);
-  static const Color warningColor = Color(0xFFFFC107);
-  static const Color infoColor = Color(0xFF2196F3);
+  // ── Color tokens ────────────────────────────────────────────────
+  static const Color primaryColor = Color(0xFFFF5C38); // Ember
+  static const Color secondaryColor = Color(0xFF2DD4BF); // Teal (rare use)
+  static const Color accentColor = Color(0xFFFF8A3D); // Warm gradient tail
 
-  // Text colors
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB0B0C0);
-  static const Color textHint = Color(0xFF6C6C80);
+  // Neutrals — cool charcoal, zero purple wash
+  static const Color surfaceColor = Color(0xFF16161C);
+  static const Color backgroundColor = Color(0xFF0E0E12);
+  static const Color cardColor = Color(0xFF1B1B23);
 
-  // AMOLED colors
+  static const Color errorColor = Color(0xFFFF4D4D);
+  static const Color successColor = Color(0xFF34C77B);
+  static const Color warningColor = Color(0xFFFFB020);
+  static const Color infoColor = Color(0xFF4C8DFF);
+
+  // Text ramp (warm-neutral whites)
+  static const Color textPrimary = Color(0xFFF4F5F7);
+  static const Color textSecondary = Color(0xFFA7ABB4);
+  static const Color textHint = Color(0xFF62656F);
+
+  // AMOLED
   static const Color amoledBackground = Color(0xFF000000);
-  static const Color amoledSurface = Color(0xFF111111);
-  static const Color amoledCard = Color(0xFF1A1A1A);
+  static const Color amoledSurface = Color(0xFF0F0F12);
+  static const Color amoledCard = Color(0xFF17171C);
 
-  // Gradient
+  // Divider / hairline
+  static const Color hairlineColor = Color(0x14FFFFFF);
+
+  // ── Gradients ───────────────────────────────────────────────────
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+    colors: [Color(0xFFFF5C38), Color(0xFFFF8A3D)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient darkGradient = LinearGradient(
-    colors: [Color(0xFF1E1E2E), Color(0xFF121212)],
+    colors: [Color(0xFF16161C), Color(0xFF0E0E12)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
-  // Glass effect
+  // ── Spacing scale (8pt) ─────────────────────────────────────────
+  static const double spacingXs = 4;
+  static const double spacingSm = 8;
+  static const double spacingMd = 16;
+  static const double spacingLg = 24;
+  static const double spacingXl = 32;
+  static const double spacingXxl = 48;
+
+  /// Standard screen-edge padding
+  static const double screenPadding = 20;
+
+  // ── Radius scale ────────────────────────────────────────────────
+  static const double radiusSmall = 8;
+  static const double radiusMedium = 12;
+  static const double radiusLarge = 16;
+  static const double radiusXLarge = 24;
+  static const double radiusFull = 100;
+
+  // ── Motion ──────────────────────────────────────────────────────
+  static const Curve motionCurve = Curves.easeOutCubic;
+  static const Curve springCurve = Curves.easeOutBack;
+  static const Duration motionFast = Duration(milliseconds: 180);
+  static const Duration motionMedium = Duration(milliseconds: 280);
+  static const Duration motionSlow = Duration(milliseconds: 420);
+
+  // ── Glass ───────────────────────────────────────────────────────
   static BoxDecoration glassDecoration({
-    double borderRadius = 16,
+    double borderRadius = radiusLarge,
     Color? color,
   }) {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(borderRadius),
-      color: color ?? Colors.white.withOpacity(0.08),
-      border: Border.all(
-        color: Colors.white.withOpacity(0.1),
-        width: 1,
-      ),
+      color: color ?? Colors.white.withOpacity(0.05),
+      border: Border.all(color: hairlineColor, width: 1),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.2),
+          color: Colors.black.withOpacity(0.25),
           blurRadius: 20,
-          spreadRadius: 0,
         ),
       ],
     );
   }
 
-  // Dark Theme
+  // ── Dark Theme ──────────────────────────────────────────────────
   static ThemeData darkTheme({Color? primaryColor, bool isAmoled = false}) {
     final primary = primaryColor ?? AppTheme.primaryColor;
     final bg = isAmoled ? amoledBackground : backgroundColor;
@@ -72,6 +106,13 @@ class AppTheme {
       primaryColor: primary,
       scaffoldBackgroundColor: bg,
       cardColor: card,
+      splashFactory: InkRipple.splashFactory,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: ZoomPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: ColorScheme.dark(
         primary: primary,
         secondary: secondaryColor,
@@ -84,33 +125,35 @@ class AppTheme {
       ),
       textTheme: GoogleFonts.poppinsTextTheme(
         ThemeData.dark().textTheme.copyWith(
-          displayLarge: TextStyle(color: textPrimary, fontSize: 32, fontWeight: FontWeight.bold),
-          displayMedium: TextStyle(color: textPrimary, fontSize: 28, fontWeight: FontWeight.bold),
-          displaySmall: TextStyle(color: textPrimary, fontSize: 24, fontWeight: FontWeight.bold),
-          headlineLarge: TextStyle(color: textPrimary, fontSize: 22, fontWeight: FontWeight.w600),
-          headlineMedium: TextStyle(color: textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
-          headlineSmall: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600),
-          titleLarge: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600),
+          displayLarge: TextStyle(color: textPrimary, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          displayMedium: TextStyle(color: textPrimary, fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          displaySmall: TextStyle(color: textPrimary, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.3),
+          headlineLarge: TextStyle(color: textPrimary, fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+          headlineMedium: TextStyle(color: textPrimary, fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+          headlineSmall: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+          titleLarge: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.2),
           titleMedium: TextStyle(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
           titleSmall: TextStyle(color: textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
-          bodyLarge: TextStyle(color: textPrimary, fontSize: 16),
-          bodyMedium: TextStyle(color: textSecondary, fontSize: 14),
-          bodySmall: TextStyle(color: textHint, fontSize: 12),
-          labelLarge: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
-          labelMedium: TextStyle(color: textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
-          labelSmall: TextStyle(color: textHint, fontSize: 10),
+          bodyLarge: TextStyle(color: textPrimary, fontSize: 15, height: 1.45),
+          bodyMedium: TextStyle(color: textSecondary, fontSize: 14, height: 1.45),
+          bodySmall: TextStyle(color: textHint, fontSize: 12, height: 1.4),
+          labelLarge: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.1),
+          labelMedium: TextStyle(color: textSecondary, fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.2),
+          labelSmall: TextStyle(color: textHint, fontSize: 10, letterSpacing: 0.3),
         ),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        scrolledUnderElevation: 0,
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w600,
+          letterSpacing: -0.2,
           color: textPrimary,
         ),
-        iconTheme: IconThemeData(color: textPrimary),
+        iconTheme: const IconThemeData(color: textPrimary),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: surface,
@@ -123,7 +166,7 @@ class AppTheme {
         color: card,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(radiusLarge),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -131,26 +174,27 @@ class AppTheme {
           backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(radiusMedium),
           ),
           textStyle: GoogleFonts.poppins(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primary,
-          side: BorderSide(color: primary),
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          side: BorderSide(color: primary.withOpacity(0.5)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(radiusMedium),
           ),
           textStyle: GoogleFonts.poppins(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -168,22 +212,22 @@ class AppTheme {
         filled: true,
         fillColor: card,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radiusMedium),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: hairlineColor),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primary, width: 2),
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: BorderSide(color: primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: errorColor),
+          borderRadius: BorderRadius.circular(radiusMedium),
+          borderSide: const BorderSide(color: errorColor),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         hintStyle: GoogleFonts.poppins(
           color: textHint,
           fontSize: 14,
@@ -191,63 +235,74 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: card,
-        selectedColor: primary.withOpacity(0.2),
+        selectedColor: primary.withOpacity(0.15),
         labelStyle: GoogleFonts.poppins(fontSize: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radiusSmall),
         ),
         side: BorderSide.none,
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
       dialogTheme: DialogTheme(
         backgroundColor: surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(radiusXLarge),
+        ),
+        titleTextStyle: GoogleFonts.poppins(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
         ),
       ),
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: surface,
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: surfaceColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(radiusXLarge)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: card,
-        contentTextStyle: GoogleFonts.poppins(color: textPrimary),
+        backgroundColor: const Color(0xFF24242E),
+        contentTextStyle: GoogleFonts.poppins(color: textPrimary, fontSize: 13.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radiusMedium),
         ),
         behavior: SnackBarBehavior.floating,
       ),
       sliderTheme: SliderThemeData(
         activeTrackColor: primary,
-        inactiveTrackColor: textHint.withOpacity(0.3),
+        inactiveTrackColor: textHint.withOpacity(0.25),
         thumbColor: primary,
-        overlayColor: primary.withOpacity(0.2),
+        overlayColor: primary.withOpacity(0.15),
         trackHeight: 3,
       ),
-      dividerTheme: DividerThemeData(
-        color: Colors.white.withOpacity(0.1),
+      tabBarTheme: const TabBarTheme(
+        dividerColor: Colors.transparent,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: hairlineColor,
         thickness: 1,
       ),
     );
   }
 
-  // Text Styles
+  // ── Text helpers ────────────────────────────────────────────────
   static TextStyle get headingStyle => GoogleFonts.poppins(
     fontSize: 24,
     fontWeight: FontWeight.bold,
+    letterSpacing: -0.3,
     color: textPrimary,
   );
 
   static TextStyle get subheadingStyle => GoogleFonts.poppins(
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: FontWeight.w600,
+    letterSpacing: -0.2,
     color: textPrimary,
   );
 
   static TextStyle get bodyStyle => GoogleFonts.poppins(
     fontSize: 14,
+    height: 1.45,
     color: textSecondary,
   );
 
@@ -256,43 +311,46 @@ class AppTheme {
     color: textHint,
   );
 
-  // Border Radius
-  static const double radiusSmall = 8;
-  static const double radiusMedium = 12;
-  static const double radiusLarge = 16;
-  static const double radiusXLarge = 24;
-  static const double radiusFull = 100;
-
-  // Spacing
-  static const double spacingXs = 4;
-  static const double spacingSm = 8;
-  static const double spacingMd = 16;
-  static const double spacingLg = 24;
-  static const double spacingXl = 32;
-  static const double spacingXxl = 48;
-
-  // Shadows
-  static List<BoxShadow> get shadowSm => [
+  // ── Shadows ─────────────────────────────────────────────────────
+  static List<BoxShadow> get shadowSm => const [
     BoxShadow(
-      color: Colors.black.withOpacity(0.1),
+      color: Color(0x1A000000),
       blurRadius: 4,
       offset: Offset(0, 2),
     ),
   ];
 
-  static List<BoxShadow> get shadowMd => [
+  static List<BoxShadow> get shadowMd => const [
     BoxShadow(
-      color: Colors.black.withOpacity(0.15),
+      color: Color(0x26000000),
       blurRadius: 8,
       offset: Offset(0, 4),
     ),
   ];
 
-  static List<BoxShadow> get shadowLg => [
+  static List<BoxShadow> get shadowLg => const [
     BoxShadow(
-      color: Colors.black.withOpacity(0.2),
+      color: Color(0x33000000),
       blurRadius: 16,
       offset: Offset(0, 8),
     ),
   ];
+}
+
+/// Global scroll feel: iOS-style bounce + stretch overscroll on every
+/// list in the app (uniform motion = the single biggest "polished app"
+/// cue), and mice/trackpads can drag-scroll too.
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+      };
 }

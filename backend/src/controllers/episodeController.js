@@ -108,12 +108,6 @@ const getEpisodeDetails = async (req, res) => {
       });
     }
 
-    // Filter sources based on premium status
-    let availableSources = episode.sources;
-    if (!isPremium) {
-      availableSources = episode.sources.filter(s => !s.isPremium);
-    }
-
     // Get watch history
     let watchHistory = null;
     if (userId) {
@@ -140,13 +134,28 @@ const getEpisodeDetails = async (req, res) => {
     // Increment view
     await episode.incrementViews();
 
+    const episodeObj = episode.toObject();
+
+    // Streaming has been removed — never expose direct video sources.
+    delete episodeObj.sources;
+
+    // Expose third-party download link metadata (host, quality, size)
+    // but keep the actual URLs behind the gated download-links endpoint.
+    episodeObj.downloadLinks = (episode.downloadLinks || [])
+      .filter((l) => l.isActive)
+      .map((l) => ({
+        _id: l._id,
+        host: l.host,
+        label: l.label,
+        quality: l.quality,
+        fileSize: l.fileSize,
+        language: l.language
+      }));
+
     res.status(200).json({
       success: true,
       data: {
-        episode: {
-          ...episode.toObject(),
-          sources: availableSources
-        },
+        episode: episodeObj,
         watchHistory,
         nextEpisode,
         prevEpisode,
@@ -163,15 +172,18 @@ const getEpisodeDetails = async (req, res) => {
 };
 
 /**
- * Get episode stream URL (requires shortner check for free users)
+ * Get third-party download links for an episode.
+ * In-app streaming was removed: episodes are downloaded from these
+ * external hosts (Mega, GDrive, Terabox, Telegram, ...) onto the device
+ * and played with the built-in offline player.
+ * Requires auth + shortner check for free users (monetization gate).
  */
-const getStreamUrl = async (req, res) => {
+const getDownloadLinks = async (req, res) => {
   try {
     const { id } = req.params;
-    const { quality = '1080p' } = req.query;
     const userId = req.userId;
 
-    const episode = await Episode.findById(id);
+    const episode = await Episode.findById(id).populate('anime', 'title status');
     if (!episode || !episode.isActive) {
       return res.status(404).json({
         success: false,
@@ -182,134 +194,70 @@ const getStreamUrl = async (req, res) => {
     const user = await User.findById(userId);
     const isPremium = user?.isPremiumActive || false;
 
-    // Premium users get direct access
-    if (isPremium) {
-      const source = episode.sources.find(s => s.quality === quality) || episode.sources[0];
-      return res.status(200).json({
-        success: true,
-        data: {
-          url: source?.url,
-          quality: source?.quality,
-          subtitles: episode.subtitles,
-          isPremium: true,
-          autoResume: true
-        }
-      });
-    }
+    // Free users need a valid shortner session
+    if (!isPremium) {
+      const session = await ShortnerSession.findValidSession(userId, id, 'download');
 
-    // Free users need shortner session
-    const session = await ShortnerSession.findValidSession(userId, id, 'stream');
-    
-    if (!session) {
-      return res.status(403).json({
-        success: false,
-        message: 'Shortener verification required',
-        requiresShortner: true,
-        episodeId: id
-      });
-    }
-
-    // Get the requested quality or fallback
-    const source = episode.sources.find(s => s.quality === quality && !s.isPremium) 
-      || episode.sources.find(s => !s.isPremium)
-      || episode.sources[0];
-
-    res.status(200).json({
-      success: true,
-      data: {
-        url: source?.url,
-        quality: source?.quality,
-        subtitles: episode.subtitles,
-        isPremium: false,
-        sessionExpiresAt: session.expireAt
+      if (!session) {
+        return res.status(403).json({
+          success: false,
+          message: 'Shortener verification required for download',
+          requiresShortner: true,
+          episodeId: id,
+          action: 'download'
+        });
       }
-    });
-  } catch (error) {
-    console.error('Get stream URL error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get stream URL'
-    });
-  }
-};
+      res.locals.sessionExpiresAt = session.expireAt;
+    }
 
-/**
- * Get download URL (requires shortner check for free users)
- */
-const getDownloadUrl = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { quality = '1080p' } = req.query;
-    const userId = req.userId;
+    const activeLinks = (episode.downloadLinks || []).filter((l) => l.isActive);
 
-    const episode = await Episode.findById(id).populate('anime', 'title');
-    if (!episode || !episode.isActive) {
+    if (activeLinks.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Episode not found'
+        message: 'No download links available for this episode yet'
       });
     }
 
-    const user = await User.findById(userId);
-    const isPremium = user?.isPremiumActive || false;
+    // Increment download count + log the download request
+    await Episode.findByIdAndUpdate(id, { $inc: { downloadCount: 1 } });
+    await Anime.findByIdAndUpdate(episode.anime._id, { $inc: { downloadCount: 1 } });
 
-    // Premium users get direct download
-    if (isPremium) {
-      const source = episode.sources.find(s => s.quality === quality) || episode.sources[0];
-      
-      // Increment download count
-      await episode.incrementViews();
-      await Anime.findByIdAndUpdate(episode.anime, { $inc: { downloadCount: 1 } });
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          url: source?.url,
-          quality: source?.quality,
-          fileSize: source?.fileSize,
-          fileName: `${episode.anime.title} - Episode ${episode.episodeNumber} [${source?.quality}].mp4`,
-          isPremium: true
-        }
-      });
-    }
-
-    // Free users need shortner session
-    const session = await ShortnerSession.findValidSession(userId, id, 'download');
-    
-    if (!session) {
-      return res.status(403).json({
-        success: false,
-        message: 'Shortener verification required for download',
-        requiresShortner: true,
-        episodeId: id,
-        action: 'download'
-      });
-    }
-
-    const source = episode.sources.find(s => s.quality === quality && !s.isPremium) 
-      || episode.sources.find(s => !s.isPremium)
-      || episode.sources[0];
-
-    // Increment download count
-    await episode.incrementViews();
-    await Anime.findByIdAndUpdate(episode.anime, { $inc: { downloadCount: 1 } });
+    const Download = require('../models/Download');
+    await Download.create({
+      user: userId,
+      anime: episode.anime._id,
+      episode: episode._id,
+      quality: req.query.quality || activeLinks[0].quality,
+      fileName: `${episode.anime.title} - E${episode.episodeNumber}.mp4`,
+      status: 'pending'
+    }).catch(() => {}); // logging only, never fail the request
 
     res.status(200).json({
       success: true,
       data: {
-        url: source?.url,
-        quality: source?.quality,
-        fileSize: source?.fileSize,
-        fileName: `${episode.anime.title} - Episode ${episode.episodeNumber} [${source?.quality}].mp4`,
-        isPremium: false,
-        sessionExpiresAt: session.expireAt
+        episodeId: episode._id,
+        episodeNumber: episode.episodeNumber,
+        animeTitle: episode.anime.title,
+        fileName: `${episode.anime.title} - E${episode.episodeNumber}`,
+        isPremium,
+        links: activeLinks.map((l) => ({
+          _id: l._id,
+          host: l.host,
+          label: l.label,
+          url: l.url,
+          quality: l.quality,
+          fileSize: l.fileSize,
+          language: l.language
+        })),
+        sessionExpiresAt: res.locals.sessionExpiresAt
       }
     });
   } catch (error) {
-    console.error('Get download URL error:', error);
+    console.error('Get download links error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get download URL'
+      message: 'Failed to get download links'
     });
   }
 };
@@ -353,7 +301,6 @@ const searchEpisodes = async (req, res) => {
 module.exports = {
   getEpisodesByFolder,
   getEpisodeDetails,
-  getStreamUrl,
-  getDownloadUrl,
+  getDownloadLinks,
   searchEpisodes
 };

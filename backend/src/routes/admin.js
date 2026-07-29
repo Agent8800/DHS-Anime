@@ -8,6 +8,7 @@ router.use(authenticate, requireAdmin);
 
 // Dashboard
 router.get('/dashboard', adminController.getDashboard);
+router.get('/user-stats', adminController.getUserStats);
 
 // Anime management
 router.post('/anime', adminController.createAnime);
@@ -24,6 +25,7 @@ router.delete('/folders/:id', adminController.deleteFolder);
 
 // Episode management
 router.post('/episodes', adminController.createEpisode);
+router.get('/anime/:animeId/episodes', adminController.getEpisodesByAnime);
 router.put('/episodes/:id', adminController.updateEpisode);
 router.delete('/episodes/:id', adminController.deleteEpisode);
 router.post('/episodes/move', adminController.moveEpisodes);
@@ -31,6 +33,11 @@ router.post('/episodes/move', adminController.moveEpisodes);
 // Premium management
 router.post('/premium/grant', adminController.managePremium);
 router.put('/premium/revoke/:userId', adminController.revokePremium);
+
+// Premium activation codes (dev generates → users redeem in-app)
+router.get('/premium-codes', adminController.listPremiumCodes);
+router.post('/premium-codes/generate', adminController.generatePremiumCodes);
+router.delete('/premium-codes/:id', adminController.deletePremiumCode);
 
 // Announcements
 router.get('/announcements', adminController.getAnnouncements);

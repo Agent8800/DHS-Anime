@@ -24,4 +24,7 @@ router.delete('/device/:deviceId', authenticate, authController.removeDevice);
 // FCM token
 router.put('/fcm-token', authenticate, authController.updateFCMToken);
 
+// Redeem a premium activation code (dev-generated)
+router.post('/redeem-premium', authenticate, authController.redeemPremiumCode);
+
 module.exports = router;

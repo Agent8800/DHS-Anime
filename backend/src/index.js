@@ -88,6 +88,7 @@ app.use('/api/anime', require('./routes/anime'));
 app.use('/api/episodes', require('./routes/episodes'));
 app.use('/api/watch-history', require('./routes/watchHistory'));
 app.use('/api/bookmarks', require('./routes/bookmarks'));
+app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Public settings endpoint
