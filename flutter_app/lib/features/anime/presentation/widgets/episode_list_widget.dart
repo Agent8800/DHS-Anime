@@ -3,6 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../download/data/download_service.dart';
+import '../../../download/presentation/widgets/download_links_sheet.dart';
 
 class EpisodeListWidget extends StatelessWidget {
   final String animeId;
@@ -27,6 +29,35 @@ class EpisodeListWidget extends StatelessWidget {
     );
   }
 
+  /// Streaming was removed: tapping an episode shows the third-party
+  /// download links. If it's already downloaded, the menu also offers
+  /// playback in the built-in offline player.
+  void _openDownloadSheet(BuildContext context, Map<String, dynamic> episode) {
+    DownloadLinksSheet.show(
+      context,
+      episodeId: episode['id']?.toString() ?? '',
+      animeTitle: episode['animeTitle']?.toString() ?? 'Episode',
+      episodeNumber: (episode['number'] as num?)?.toInt() ?? 1,
+    );
+  }
+
+  void _playIfDownloaded(BuildContext context, Map<String, dynamic> episode) {
+    final record = DownloadService().findByEpisode(episode['id']?.toString() ?? '');
+    if (record == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Download this episode first to watch it offline'),
+        ),
+      );
+      return;
+    }
+    final file = Uri.encodeComponent(record['filePath'].toString());
+    final title = Uri.encodeComponent(record['animeTitle'].toString());
+    context.push(
+      '/player/${episode['id']}?animeId=$animeId&episode=${episode['number']}&file=$file&title=$title',
+    );
+  }
+
   Widget _buildEpisodeTile(BuildContext context, Map<String, dynamic> episode) {
     final progress = episode['progress'] as double? ?? 0.0;
 
@@ -38,9 +69,7 @@ class EpisodeListWidget extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          context.push('/player/${episode['id']}?animeId=$animeId&episode=${episode['number']}');
-        },
+        onTap: () => _openDownloadSheet(context, episode),
         child: Padding(
           padding: EdgeInsets.all(12),
           child: Row(
@@ -82,7 +111,7 @@ class EpisodeListWidget extends StatelessWidget {
                         ),
                       ),
 
-                    // Play icon
+                    // Download icon (download-to-play)
                     Positioned.fill(
                       child: Center(
                         child: Container(
@@ -92,7 +121,7 @@ class EpisodeListWidget extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.play_arrow_rounded,
+                            Icons.download_for_offline_outlined,
                             color: Colors.white,
                             size: 20,
                           ),
@@ -153,7 +182,7 @@ class EpisodeListWidget extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                itemBuilder: (context) => [
+                itemBuilder: (menuContext) => [
                   PopupMenuItem(
                     child: Row(
                       children: [
@@ -162,7 +191,26 @@ class EpisodeListWidget extends StatelessWidget {
                         Text('Download', style: TextStyle(color: AppTheme.textPrimary)),
                       ],
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      // Defer until the popup route has closed
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => _openDownloadSheet(context, episode),
+                      );
+                    },
+                  ),
+                  PopupMenuItem(
+                    child: Row(
+                      children: [
+                        Icon(Icons.play_circle_outline_rounded, size: 20, color: AppTheme.textPrimary),
+                        SizedBox(width: 12),
+                        Text('Play downloaded', style: TextStyle(color: AppTheme.textPrimary)),
+                      ],
+                    ),
+                    onTap: () {
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => _playIfDownloaded(context, episode),
+                      );
+                    },
                   ),
                   PopupMenuItem(
                     child: Row(

@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../notification/presentation/providers/notification_provider.dart';
 import '../widgets/banner_slider.dart';
 import '../widgets/section_header.dart';
 import '../widgets/anime_card.dart';
@@ -27,6 +28,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Warm the bell badge (new-episode / new-donghua notifications)
+    Future.microtask(
+      () => ref.read(notificationCenterProvider.notifier).refreshBadgeOnly(),
+    );
   }
 
   void _onScroll() {
@@ -43,6 +48,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final headerHeight = MediaQuery.of(context).padding.top + 72;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -50,9 +57,9 @@ class _HomePageState extends ConsumerState<HomePage> {
             controller: _scrollController,
             physics: BouncingScrollPhysics(),
             slivers: [
-              // Glassmorphism Header
+              // Space under the floating header
               SliverToBoxAdapter(
-                child: GlassmorphismHeader(scrollOffset: _scrollOffset),
+                child: SizedBox(height: headerHeight),
               ),
 
               // Banner Slider
@@ -121,6 +128,14 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ],
           ),
+
+          // Floating glass header — hovers above the feed
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: GlassmorphismHeader(scrollOffset: _scrollOffset),
+          ),
         ],
       ),
     );
@@ -151,7 +166,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 episode: 'Episode ${index + 5}',
                 progress: (index + 1) * 0.15,
                 imageUrl: 'https://via.placeholder.com/300x170',
-                onTap: () => context.push('/player/ep_$index?animeId=anime_1&episode=${index + 5}'),
+                onTap: () => context.push('/anime/anime_1'),
               );
             },
           ),
@@ -241,10 +256,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                 ),
                 trailing: Icon(
-                  Icons.play_circle_outline,
+                  Icons.download_for_offline_outlined,
                   color: AppTheme.primaryColor,
                 ),
-                onTap: () {},
+                onTap: () => context.push('/anime/douluo_continent'),
               ),
             );
           },

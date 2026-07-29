@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../download/presentation/widgets/download_links_sheet.dart';
 
 class EpisodePage extends ConsumerStatefulWidget {
   final String animeId;
@@ -22,6 +23,17 @@ class _EpisodePageState extends ConsumerState<EpisodePage>
   bool _isGridView = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  /// Streaming was removed — episodes are downloaded via third-party
+  /// links and played offline in the built-in player.
+  void _showDownloads(int episode) {
+    DownloadLinksSheet.show(
+      context,
+      episodeId: 'ep_$episode',
+      animeTitle: 'Anime ${widget.animeId}',
+      episodeNumber: episode,
+    );
+  }
 
   // Dummy folders
   final List<Map<String, dynamic>> _folders = [
@@ -135,7 +147,7 @@ class _EpisodePageState extends ConsumerState<EpisodePage>
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
-            onTap: () => context.push('/player/ep_$ep?animeId=${widget.animeId}&episode=$ep'),
+            onTap: () => _showDownloads(ep),
             child: Padding(
               padding: EdgeInsets.all(12),
               child: Row(
@@ -184,18 +196,9 @@ class _EpisodePageState extends ConsumerState<EpisodePage>
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.play_circle_outline, color: AppTheme.primaryColor),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.download_outlined, color: AppTheme.textSecondary),
-                        onPressed: () {},
-                      ),
-                    ],
+                  IconButton(
+                    icon: Icon(Icons.download_for_offline_outlined, color: AppTheme.primaryColor),
+                    onPressed: () => _showDownloads(ep),
                   ),
                 ],
               ),
@@ -219,7 +222,7 @@ class _EpisodePageState extends ConsumerState<EpisodePage>
       itemBuilder: (context, index) {
         final ep = episodes[index];
         return GestureDetector(
-          onTap: () => context.push('/player/ep_$ep?animeId=${widget.animeId}&episode=$ep'),
+          onTap: () => _showDownloads(ep),
           child: Container(
             decoration: BoxDecoration(
               color: AppTheme.cardColor,

@@ -13,11 +13,11 @@ router.get('/search/:animeId', episodeController.searchEpisodes);
 // Get episode details
 router.get('/:id', optionalAuth, episodeController.getEpisodeDetails);
 
-// Get stream URL (requires auth + shortner check for free users)
-router.get('/:id/stream', authenticate, checkShortnerSession('stream'), episodeController.getStreamUrl);
+// In-app streaming was removed — episodes are downloaded via
+// third-party links and played offline with the built-in player.
 
-// Get download URL (requires auth + shortner check for free users)
-router.get('/:id/download', authenticate, checkShortnerSession('download'), episodeController.getDownloadUrl);
+// Get third-party download links (requires auth + shortner check for free users)
+router.get('/:id/download-links', authenticate, checkShortnerSession('download'), episodeController.getDownloadLinks);
 
 // Verify shortner completion
 router.post('/verify-shortner', authenticate, verifyShortner);

@@ -19,21 +19,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   final List<_OnboardingItem> _items = [
     _OnboardingItem(
-      icon: Icons.play_circle_fill_rounded,
-      title: 'Stream Donghua',
-      description: 'Watch your favorite Chinese animated series in high quality with subtitles in your language.',
+      icon: Icons.download_for_offline_rounded,
+      title: 'Download Episodes',
+      description: 'Grab episodes from fast mirror links straight to your DHS Anime folder — no streaming, no buffering.',
       color: Color(0xFF6C63FF),
     ),
     _OnboardingItem(
-      icon: Icons.download_rounded,
-      title: 'Download & Watch Offline',
-      description: 'Download episodes to watch later without an internet connection. Perfect for travel!',
+      icon: Icons.play_circle_fill_rounded,
+      title: 'Watch Offline',
+      description: 'Play your downloaded episodes anytime in the built-in player, even with no internet connection.',
       color: Color(0xFF03DAC6),
     ),
     _OnboardingItem(
-      icon: Icons.star_rounded,
-      title: 'Premium Experience',
-      description: 'Go premium for ad-free streaming, no shorteners, exclusive quality, and priority servers.',
+      icon: Icons.notifications_active_rounded,
+      title: 'Never Miss an Episode',
+      description: 'Get notified the moment a new episode or a new donghua drops.',
       color: Color(0xFFFF6584),
     ),
   ];

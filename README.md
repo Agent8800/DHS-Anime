@@ -1,27 +1,32 @@
 # DonghuaHub
 
-Modern Android & iOS application for streaming and downloading Donghua (Chinese Animation). All episodes are uploaded manually by the administrator.
+Modern Android & iOS application for **downloading** and watching Donghua (Chinese Animation) **offline**. All episodes and download links are uploaded manually by the administrator.
 
 ## 🎬 Features
 
 ### For Users
-- **Home Screen** - Continue Watching, Recently Updated, Trending, Popular, Latest Episodes, Genres, Top Rated, Random Picks, Banner Slider, Announcements
+- **Home Screen** - Continue Watching, Recently Updated, Trending, Popular, Latest Episodes, Genres, Top Rated, Random Picks, Banner Slider, Announcements — with a **floating glass header**
+- **Download-First Episodes** - Every episode is downloaded from **third-party mirror links** (Mega, GDrive, Terabox, Telegram, Direct). In-app streaming has been removed by design.
+- **Download Location Settings** - Choose where files go in **Settings → Downloads → Download Location**. Default: a `DHS Anime` folder on internal storage (`/storage/emulated/0/DHS Anime`), created automatically.
+- **Built-in Offline Player** - Downloaded episodes play in the app's own player: Landscape/Portrait, skip intro, brightness/volume/seek gestures, lock screen, auto position tracking.
+- **Notifications** - A bell icon in the header shows every **new episode** and **new donghua** announcement. Users who granted the notification permission also receive an FCM push; users who denied it still see everything in the in-app feed (bell icon only).
 - **Search** - Instant search with filters (Genre, Year, Status, Studio, Language, Sort)
 - **Anime Details** - Banner, Poster, Description, Genres, Studios, Rating, Episode List, Recommendations, Characters, Related Series, Trailer
-- **Video Player** - Landscape/Portrait, Speed Control, Subtitle Selection, Skip Intro, Next/Previous Episode, Brightness/Volume/Seek Gestures, Lock Screen, Quality Selector, Fullscreen, Auto Resume
-- **Download System** - Premium: Direct Download | Free: Solve Shortener → Unlock for 4 Hours
-- **Streaming** - Same as download logic
+- **Download System** - Premium: Direct links | Free: Solve Shortener → Unlock for 4 Hours
 - **Bookmarks** - Unlimited, Cloud Sync
 - **Watch History** - Auto Save, Resume from last position
-- **Settings** - Dark Mode, AMOLED Mode, Theme Colour, Subtitle Settings, Video Quality, Download Folder, Cache Cleaner
+- **Settings** - Dark Mode, AMOLED Mode, Theme Colour, Preferred Quality/Language, Download Location, Storage Permission, Cache Cleaner
+
+### Auth
+- **Clerk + Google only** - Sign in and sign up happen with a single "Continue with Google" button. Email/password signup has been removed (enable *only* the Google provider in your Clerk dashboard).
 
 ### For Admin
 - **Dashboard** - Total Users, Premium Users, Anime, Episodes, Today's Views, Downloads, Revenue, Charts
-- **Upload Anime** - Fetch metadata from AniList API (auto-fills everything except episodes)
-- **Upload Episode** - Anime, Folder, Episode, Video, Thumbnail, Subtitle, Language, Quality
+- **Upload Anime** - Fetch metadata from AniList API (auto-fills everything except episodes). Every new anime automatically notifies all users.
+- **Upload Episode** - Anime, Folder, Episode, Video, Thumbnail, Subtitle, Language, Quality, **Download Links** (multiple third-party mirrors per episode). Every new episode automatically notifies all users.
 - **Folder Manager** - Create/Rename/Delete Folders, Move Episodes, Reorder
 - **Premium Manager** - Grant/Expire/Lifetime/Monthly Premium
-- **Notifications** - Push Notifications for New Episode, Maintenance, Offers, Announcements
+- **Notifications** - Broadcasts for New Episode / New Donghua (automatic), Maintenance, Offers, Announcements
 - **Reports** - View and manage user reports
 - **Backup & Restore** - Export/Import all MongoDB data to JSON
 
@@ -54,9 +59,9 @@ DHS-Anime/
 │   │   ├── config/        # Database configuration
 │   │   ├── controllers/   # Route handlers
 │   │   ├── models/        # Mongoose models
-│   │   ├── routes/        # API routes
+│   │   ├── routes/        # API routes (incl. /api/notifications)
 │   │   ├── middleware/     # Auth, Clerk webhook, Shortner
-│   │   ├── services/      # Backup service
+│   │   ├── services/      # Backup, Notification, Push (FCM) services
 │   │   └── utils/         # Signed URL utility
 │   ├── scripts/           # Backup, Restore, Seed scripts
 │   └── uploads/           # Local uploads (dev only)
@@ -66,13 +71,14 @@ DHS-Anime/
 │   │   ├── config/        # API config, Router
 │   │   ├── core/          # Theme, Constants, Utils
 │   │   ├── features/      # Feature modules
-│   │   │   ├── auth/      # Authentication
-│   │   │   ├── home/      # Home screen
+│   │   │   ├── auth/      # Clerk Google sign-in (no email/password)
+│   │   │   ├── home/      # Home screen + floating header
 │   │   │   ├── anime/     # Anime details
-│   │   │   ├── episode/   # Episode list
-│   │   │   ├── player/    # Video player
+│   │   │   ├── episode/   # Episode list → download links
+│   │   │   ├── player/    # Built-in offline player
+│   │   │   ├── notification/ # Bell feed + FCM registration
 │   │   │   ├── search/    # Search
-│   │   │   ├── download/  # Downloads
+│   │   │   ├── download/  # Downloads (location, records)
 │   │   │   ├── bookmark/  # Bookmarks
 │   │   │   ├── settings/  # Settings
 │   │   │   └── admin/     # Admin panel
@@ -86,8 +92,10 @@ DHS-Anime/
 - Node.js 18+
 - MongoDB 6+
 - Flutter 3.2+
-- Clerk Account (for authentication)
-- Cloudflare R2 / Wasabi / Bunny Storage (for episodes)
+- Clerk Account (Google provider enabled, Email/Password disabled)
+- Firebase project (optional — for push notifications)
+- Third-party mirrors for episodes (Mega, GDrive, Terabox, Telegram, …) —
+  episode files are not hosted by or streamed through this backend.
 
 ### Backend Setup
 
@@ -130,17 +138,38 @@ cd flutter_app
 flutter pub get
 ```
 
-3. Run the app:
+3. Provide your Clerk publishable key (Google-only app):
+```bash
+flutter run --dart-define=CLERK_PUBLISHABLE_KEY=pk_test_xxxx
+```
+(or set `AppConstants.clerkPublishableKey` in `lib/core/constants/app_constants.dart`)
+
+4. Run the app:
 ```bash
 flutter run
 ```
+
+### Android notes
+- Downloads write to the public `DHS Anime` folder by default — on
+  Android 11+ the app requests "All files access" (`MANAGE_EXTERNAL_STORAGE`);
+  below that, standard storage permission. Users who deny it transparently
+  fall back to the app-private folder.
+- Declare in `android/app/src/main/AndroidManifest.xml`:
+  `WRITE_EXTERNAL_STORAGE` (maxSdk 29), `MANAGE_EXTERNAL_STORAGE`,
+  `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, and
+  `android:requestLegacyExternalStorage="true"` (targetSdk 29).
+- Firebase push requires `google-services.json` in `android/app/` and the
+  service account JSON on the backend (`FIREBASE_SERVICE_ACCOUNT_JSON` or
+  `FCM_SERVICE_ACCOUNT_PATH`). Without it, notifications still appear in
+  the in-app bell feed — just no system push.
 
 ## 📊 Database Collections
 
 - **users** - User profiles, preferences, devices
 - **anime** - Anime metadata (from AniList/MAL)
-- **episodes** - Episode data with video sources
+- **episodes** - Episode data with third-party download links
 - **folders** - Folder structure for episodes
+- **notifications** - Personal + broadcast notifications (new episode, new donghua, announcements)
 - **downloads** - Download tracking
 - **watch_history** - Watch progress
 - **bookmarks** - User bookmarks
@@ -152,11 +181,10 @@ flutter run
 
 ## 🔐 Security
 
-- Signed URLs for video access
-- Encrypted links
-- Token authentication (JWT + Clerk)
+- Token authentication (JWT + Clerk, Google-only)
+- Download links gated by shortener verification for free users
 - Rate limiting
-- No direct video URL exposure
+- No video files hosted on the backend — episodes download from third-party mirrors
 - Device management
 
 ## 📱 UI Design

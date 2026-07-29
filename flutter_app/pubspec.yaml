@@ -44,8 +44,9 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   path_provider: ^2.1.2
 
-  # Auth
-  google_sign_in: ^6.2.1
+  # Auth (Google-only sign-in via Clerk; email/password is not used)
+  clerk_flutter: ^0.0.12-beta
+  clerk_auth: any # exact version is pinned by clerk_flutter
   firebase_core: ^2.24.2
   firebase_messaging: ^14.7.10
 
@@ -56,6 +57,7 @@ dependencies:
   connectivity_plus: ^5.0.2
   package_info_plus: ^5.0.1
   permission_handler: ^11.1.0
+  device_info_plus: ^10.1.0
   image_picker: ^1.0.7
   flutter_local_notifications: ^16.3.2
   timeago: ^3.6.1
@@ -65,9 +67,8 @@ dependencies:
   dartz: ^0.10.1
   freezed_annotation: ^2.4.1
 
-  # Downloads
+  # Downloads (episodes from third-party links to device storage)
   flutter_downloader: ^1.11.6
-  background_downloader: ^8.5.2
 
 dev_dependencies:
   flutter_test:

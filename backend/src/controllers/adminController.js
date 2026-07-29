@@ -8,6 +8,7 @@ const Report = require('../models/Report');
 const WatchHistory = require('../models/WatchHistory');
 const Download = require('../models/Download');
 const AppSettings = require('../models/AppSettings');
+const notificationService = require('../services/notificationService');
 const axios = require('axios');
 
 /**
@@ -343,6 +344,12 @@ const createAnime = async (req, res) => {
 
     await anime.save();
 
+    // Notify every user about the new donghua (push + in-app bell icon).
+    // Fire-and-forget: never blocks or fails the admin response.
+    notificationService
+      .notifyNewDonghua(req.app.get('io'), anime)
+      .catch((err) => console.error('New donghua notification error:', err));
+
     res.status(201).json({
       success: true,
       data: { anime },
@@ -527,6 +534,7 @@ const createEpisode = async (req, res) => {
       description,
       thumbnail,
       sources,
+      downloadLinks,
       subtitles,
       language,
       duration,
@@ -553,6 +561,7 @@ const createEpisode = async (req, res) => {
       description,
       thumbnail,
       sources,
+      downloadLinks: downloadLinks || [],
       subtitles,
       language: language || 'Hindi',
       duration,
@@ -567,6 +576,12 @@ const createEpisode = async (req, res) => {
     // Update anime total episodes
     const totalEpisodes = await Episode.countDocuments({ anime: animeId, isActive: true });
     await Anime.findByIdAndUpdate(animeId, { totalEpisodes });
+
+    // Notify every user about the new episode (push + in-app bell icon).
+    // Fire-and-forget: never blocks or fails the admin response.
+    notificationService
+      .notifyNewEpisode(req.app.get('io'), episode, anime)
+      .catch((err) => console.error('New episode notification error:', err));
 
     res.status(201).json({
       success: true,

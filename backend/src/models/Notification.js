@@ -15,7 +15,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['new_episode', 'announcement', 'maintenance', 'offer', 'bookmark_update', 'system'],
+    enum: ['new_episode', 'new_donghua', 'announcement', 'maintenance', 'offer', 'bookmark_update', 'system'],
     default: 'system'
   },
   image: {
@@ -32,6 +32,12 @@ const notificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // For broadcast notifications (user == null): users who have read it.
+  // Personal notifications use isRead instead.
+  readBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   isBroadcast: {
     type: Boolean,
     default: false

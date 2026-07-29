@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../download/presentation/widgets/download_links_sheet.dart';
 import '../widgets/anime_info_section.dart';
 import '../widgets/character_list_widget.dart';
 
@@ -203,9 +204,9 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.play_arrow_rounded),
-                      label: Text('Watch Now'),
+                      onPressed: () => context.push('/anime/${widget.animeId}/episodes'),
+                      icon: Icon(Icons.format_list_numbered_rounded),
+                      label: Text('Episodes'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         padding: EdgeInsets.symmetric(vertical: 14),
@@ -215,7 +216,15 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
                   SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        // Latest-first download shortcut
+                        DownloadLinksSheet.show(
+                          context,
+                          episodeId: 'ep_1',
+                          animeTitle: widget.animeId,
+                          episodeNumber: 1,
+                        );
+                      },
                       icon: Icon(Icons.download_rounded),
                       label: Text('Download'),
                       style: OutlinedButton.styleFrom(
@@ -408,11 +417,17 @@ class _AnimeDetailPageState extends ConsumerState<AnimeDetailPage> {
           style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
         ),
         trailing: Icon(
-          Icons.play_circle_outline_rounded,
+          Icons.download_for_offline_outlined,
           color: AppTheme.primaryColor,
         ),
         onTap: () {
-          context.push('/player/ep_$episodeNumber?animeId=${widget.animeId}&episode=$episodeNumber');
+          // Streaming removed — show third-party download links instead
+          DownloadLinksSheet.show(
+            context,
+            episodeId: 'ep_$episodeNumber',
+            animeTitle: widget.animeId,
+            episodeNumber: episodeNumber,
+          );
         },
       ),
     );

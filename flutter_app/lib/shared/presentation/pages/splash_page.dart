@@ -103,7 +103,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
             // Tagline
             Text(
-              'Stream Your Favorite Donghua',
+              'Download & Watch Your Favorite Donghua',
               style: TextStyle(
                 fontSize: 16,
                 color: AppTheme.textSecondary,

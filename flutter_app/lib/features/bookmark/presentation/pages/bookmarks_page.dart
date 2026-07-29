@@ -222,7 +222,7 @@ class _BookmarksPageState extends ConsumerState<BookmarksPage>
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: () => context.push('/player/cw_$index?animeId=anime_$index&episode=${index + 3}'),
+            onTap: () => context.push('/anime/anime_$index'),
             child: Padding(
               padding: EdgeInsets.all(12),
               child: Row(
