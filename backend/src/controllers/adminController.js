@@ -522,6 +522,41 @@ const deleteFolder = async (req, res) => {
 };
 
 /**
+ * Get all episodes of an anime WITH download links.
+ * Used by the admin mirror-link editor (never exposed publicly).
+ */
+const getEpisodesByAnime = async (req, res) => {
+  try {
+    const { animeId } = req.params;
+
+    const anime = await Anime.findById(animeId).select('title poster status totalEpisodes');
+    if (!anime) {
+      return res.status(404).json({ success: false, message: 'Anime not found' });
+    }
+
+    const episodes = await Episode.find({ anime: animeId })
+      .sort({ episodeNumber: 1 })
+      .select('episodeNumber title folder language duration isActive downloadLinks downloadCount viewCount');
+
+    // Folders too, so the panel can assign new episodes to one
+    const folders = await Folder.find({ anime: animeId })
+      .sort({ order: 1 })
+      .select('name episodeRange order');
+
+    res.status(200).json({
+      success: true,
+      data: { anime, episodes, folders }
+    });
+  } catch (error) {
+    console.error('Get episodes by anime error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get episodes'
+    });
+  }
+};
+
+/**
  * Create episode
  */
 const createEpisode = async (req, res) => {
@@ -1049,6 +1084,7 @@ module.exports = {
   updateFolder,
   deleteFolder,
   createEpisode,
+  getEpisodesByAnime,
   updateEpisode,
   deleteEpisode,
   moveEpisodes,

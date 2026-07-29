@@ -24,6 +24,7 @@ router.delete('/folders/:id', adminController.deleteFolder);
 
 // Episode management
 router.post('/episodes', adminController.createEpisode);
+router.get('/anime/:animeId/episodes', adminController.getEpisodesByAnime);
 router.put('/episodes/:id', adminController.updateEpisode);
 router.delete('/episodes/:id', adminController.deleteEpisode);
 router.post('/episodes/move', adminController.moveEpisodes);

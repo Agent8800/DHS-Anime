@@ -67,6 +67,7 @@ DHS-Anime/
 │   └── uploads/           # Local uploads (dev only)
 │
 ├── flutter_app/           # Flutter Frontend
+│   ├── android/           # Android manifest + setup notes (storage, FCM, Clerk OAuth)
 │   ├── lib/
 │   │   ├── config/        # API config, Router
 │   │   ├── core/          # Theme, Constants, Utils
@@ -84,6 +85,11 @@ DHS-Anime/
 │   │   │   └── admin/     # Admin panel
 │   │   └── shared/        # Shared widgets
 │   └── assets/            # Images, Animations, Fonts
+│
+├── admin_panel/           # Mirror Link Manager — dependency-free web panel
+│                          # for pasting third-party episode download links
+│                          # (bulk paste with host auto-detect, demo + live modes)
+├── previews/              # UI design previews (admin panel + app screens)
 ```
 
 ## 🚀 Getting Started
