@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DonghuaHub Admin — Mirror Link Manager</title>
+  <title>DHS Anime — Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎬</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%23ff5c38'/><path d='M25 19l17 13-17 13z' fill='white'/></svg>" />
 </head>
 <body>
 
@@ -13,10 +13,12 @@
   <div id="loginScreen" class="login-screen">
     <div class="login-card glass">
       <div class="login-logo">
-        <span class="logo-badge">▶</span>
+        <span class="logo-badge">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </span>
       </div>
-      <h1>DonghuaHub <span class="accent">Admin</span></h1>
-      <p class="muted">Mirror Link Manager — paste Mega / GDrive / Terabox / Telegram links for your episodes and every user gets notified.</p>
+      <h1>DHS Anime <span class="accent">Dashboard</span></h1>
+      <p class="muted">Manage mirror links, premium codes and audience stats for your donghua app.</p>
 
       <label>API Base URL</label>
       <input id="apiBaseInput" type="text" value="http://localhost:5000/api" spellcheck="false" />
@@ -25,7 +27,10 @@
       <input id="tokenInput" type="password" placeholder="Bearer token from an admin account" spellcheck="false" />
 
       <button id="connectBtn" class="btn btn-primary btn-block">Connect to Backend</button>
-      <button id="demoBtn" class="btn btn-ghost btn-block">✨ Try Demo Mode (no backend)</button>
+      <button id="demoBtn" class="btn btn-ghost btn-block">
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Try Demo Mode (no backend)
+      </button>
 
       <p id="loginError" class="error-text hidden"></p>
     </div>
@@ -40,26 +45,39 @@
     <!-- Sidebar -->
     <aside id="sidebar" class="sidebar glass">
       <div class="sidebar-head">
-        <span class="logo-badge small">▶</span>
+        <span class="logo-badge small">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </span>
         <div>
-          <strong>DonghuaHub</strong>
-          <span class="muted tiny">Mirror Link Manager</span>
+          <strong>DHS Anime</strong>
+          <span class="muted tiny">Admin Dashboard</span>
         </div>
         <span id="modeBadge" class="badge badge-demo">DEMO</span>
       </div>
 
-      <input id="animeSearch" class="search" type="text" placeholder="🔍  Search anime…" />
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="animeSearch" class="search" type="text" placeholder="Search anime…" />
+      </div>
 
       <div id="animeList" class="anime-list"><!-- items --></div>
 
-      <button id="newAnimeBtn" class="btn btn-primary btn-block">＋ New Donghua</button>
-      <p class="tiny muted center">Adding a donghua notifies all users 🔔</p>
+      <button id="newAnimeBtn" class="btn btn-primary btn-block">
+        <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Donghua
+      </button>
+      <p class="tiny muted center notify-note">
+        <svg class="ic-inline" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Adding a donghua notifies all users
+      </p>
     </aside>
 
     <!-- Main -->
     <main class="main">
       <header class="topbar glass">
-        <button id="menuToggle" class="btn btn-ghost menu-toggle" title="Menu">☰</button>
+        <button id="menuToggle" class="btn btn-ghost menu-toggle" title="Menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <div class="topbar-title">
           <h2 id="currentTitle">Dashboard</h2>
           <p id="currentSub" class="muted tiny">Audience stats &amp; premium code generator</p>
@@ -70,51 +88,73 @@
           <div class="stat glass"><span id="statHosts">0</span><label>Hosts</label></div>
         </div>
         <div class="topbar-actions">
-          <button id="codesBtn" class="btn btn-ghost" title="Premium activation codes">💎</button>
-          <button id="refreshBtn" class="btn btn-ghost" title="Refresh">⟳</button>
-          <button id="logoutBtn" class="btn btn-ghost" title="Sign out">⏻</button>
+          <button id="codesBtn" class="btn btn-ghost" title="Premium activation codes">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="m12 21-4-12 4-6 4 6z"/></svg>
+          </button>
+          <button id="refreshBtn" class="btn btn-ghost" title="Refresh">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button id="logoutBtn" class="btn btn-ghost" title="Sign out">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+          </button>
         </div>
       </header>
 
       <!-- View tabs -->
       <nav class="view-tabs">
-        <button id="tabDashboard" class="view-tab active" data-view="dashboard">📊 Dashboard</button>
-        <button id="tabLinks" class="view-tab" data-view="links">🔗 Mirror Links</button>
+        <button id="tabDashboard" class="view-tab active" data-view="dashboard">
+          <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Dashboard
+        </button>
+        <button id="tabLinks" class="view-tab" data-view="links">
+          <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Mirror Links
+        </button>
       </nav>
 
       <!-- ════════ DASHBOARD VIEW ════════ -->
       <section id="dashboardView" class="view-section">
         <div class="stat-cards">
           <div class="stat-card glass">
-            <span class="stat-card-icon" style="background:rgba(255,92,56,0.14)">👥</span>
+            <span class="stat-card-icon" style="background:rgba(255,92,56,0.14);color:#ff5c38">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
             <div>
               <span id="statTotalUsers" class="stat-card-value">—</span>
               <label>Total Users</label>
             </div>
           </div>
           <div class="stat-card glass">
-            <span class="stat-card-icon" style="background:rgba(6,167,255,0.14)">⚡</span>
+            <span class="stat-card-icon" style="background:rgba(6,167,255,0.14);color:#06a7ff">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </span>
             <div>
               <span id="statDailyActive" class="stat-card-value">—</span>
               <label>Daily Active Users</label>
             </div>
           </div>
           <div class="stat-card glass">
-            <span class="stat-card-icon" style="background:rgba(255,176,32,0.14)">💎</span>
+            <span class="stat-card-icon" style="background:rgba(255,176,32,0.14);color:#ffb020">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="m12 21-4-12 4-6 4 6z"/></svg>
+            </span>
             <div>
               <span id="statTotalPremium" class="stat-card-value">—</span>
               <label>Total Premium Users</label>
             </div>
           </div>
           <div class="stat-card glass">
-            <span class="stat-card-icon" style="background:rgba(62,207,142,0.14)">✅</span>
+            <span class="stat-card-icon" style="background:rgba(62,207,142,0.14);color:#3ecf8e">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </span>
             <div>
               <span id="statActivePremium" class="stat-card-value">—</span>
               <label>Active Premium Users</label>
             </div>
           </div>
           <div class="stat-card glass">
-            <span class="stat-card-icon" style="background:rgba(148,108,255,0.14)">⬇</span>
+            <span class="stat-card-icon" style="background:rgba(148,108,255,0.14);color:#946cff">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
             <div>
               <span id="statTotalDownloads" class="stat-card-value">—</span>
               <label>Total Downloads</label>
@@ -126,7 +166,10 @@
         <div class="panel-box">
           <div class="panel-box-head">
             <div>
-              <h3>💎 Premium Activation Codes</h3>
+              <h3>
+                <svg class="ic-inline" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--warning)"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20"/><path d="m12 21-4-12 4-6 4 6z"/></svg>
+                Premium Activation Codes
+              </h3>
               <p class="muted tiny">Generate → share → users redeem in the app (Account → Activate with Code)</p>
             </div>
           </div>
@@ -143,7 +186,10 @@
               <label>Note <span class="muted tiny">(optional)</span></label>
               <input id="codeNoteInput" type="text" placeholder="e.g. Telegram giveaway" maxlength="120" />
             </div>
-            <button id="generateCodesBtn" class="btn btn-primary">⚡ Generate</button>
+            <button id="generateCodesBtn" class="btn btn-primary">
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Generate
+            </button>
           </div>
           <div class="table-scroll">
             <table class="codes-table">
@@ -169,7 +215,10 @@
         <div class="episodes-wrap">
           <div class="episodes-toolbar">
             <h3>Episodes</h3>
-            <button id="addEpisodeBtn" class="btn btn-primary" disabled>＋ Add Episode</button>
+            <button id="addEpisodeBtn" class="btn btn-primary" disabled>
+              <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Episode
+            </button>
           </div>
           <div class="table-scroll">
             <table class="episode-table">
@@ -183,7 +232,7 @@
                 </tr>
               </thead>
               <tbody id="episodeRows">
-                <tr><td colspan="5" class="placeholder-cell">🎌 Choose an anime to see its episodes</td></tr>
+                <tr><td colspan="5" class="placeholder-cell">Choose an anime to see its episodes</td></tr>
               </tbody>
             </table>
           </div>
@@ -200,11 +249,16 @@
           <h3 id="editorTitle">Edit Links — Episode 1</h3>
           <p class="muted tiny">Links appear instantly in the app's download sheet</p>
         </div>
-        <button class="btn btn-ghost" data-close>✕</button>
+        <button class="btn btn-ghost icon-only" data-close title="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
 
       <div class="paste-box">
-        <label>📋 Bulk paste mirror links <span class="muted tiny">(one per line — host, quality &amp; size are auto-detected)</span></label>
+        <label>
+          <svg class="ic-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+          Bulk paste mirror links <span class="muted tiny">(one per line — host, quality &amp; size are auto-detected)</span>
+        </label>
         <textarea id="pasteArea" rows="4" spellcheck="false"
 placeholder="Mega 1080p | https://mega.nz/file/xxxxx | 1080p | 480 MB
 https://drive.google.com/file/d/yyyy
@@ -218,7 +272,10 @@ Telegram | https://t.me/c/123/456 | 720p"></textarea>
       <div id="linkList" class="link-list"><!-- link rows --></div>
 
       <div class="modal-foot">
-        <button id="saveLinksBtn" class="btn btn-success">💾 Save Changes</button>
+        <button id="saveLinksBtn" class="btn btn-success">
+          <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Save Changes
+        </button>
         <button class="btn btn-ghost" data-close>Cancel</button>
       </div>
     </div>
@@ -228,8 +285,10 @@ Telegram | https://t.me/c/123/456 | 720p"></textarea>
   <div id="episodeModal" class="modal-backdrop hidden">
     <div class="modal modal-sm glass-strong">
       <div class="modal-head">
-        <h3>＋ Add Episode</h3>
-        <button class="btn btn-ghost" data-close>✕</button>
+        <h3>Add Episode</h3>
+        <button class="btn btn-ghost icon-only" data-close title="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
       <label>Folder</label>
       <select id="folderSelect"></select>
@@ -238,7 +297,10 @@ Telegram | https://t.me/c/123/456 | 720p"></textarea>
       <label>Title <span class="muted tiny">(optional)</span></label>
       <input id="epTitleInput" type="text" placeholder="Episode title" />
       <div class="modal-foot">
-        <button id="createEpisodeBtn" class="btn btn-success">Create &amp; Notify Users 🔔</button>
+        <button id="createEpisodeBtn" class="btn btn-success">
+          Create
+          <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" title="Users will be notified"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
         <button class="btn btn-ghost" data-close>Cancel</button>
       </div>
     </div>
@@ -248,8 +310,10 @@ Telegram | https://t.me/c/123/456 | 720p"></textarea>
   <div id="animeModal" class="modal-backdrop hidden">
     <div class="modal modal-sm glass-strong">
       <div class="modal-head">
-        <h3>＋ New Donghua</h3>
-        <button class="btn btn-ghost" data-close>✕</button>
+        <h3>New Donghua</h3>
+        <button class="btn btn-ghost icon-only" data-close title="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
       <label>Title</label>
       <input id="animeTitleInput" type="text" placeholder="e.g. Battle Through the Heavens" />
@@ -261,7 +325,10 @@ Telegram | https://t.me/c/123/456 | 720p"></textarea>
         <option value="hiatus">Hiatus</option>
       </select>
       <div class="modal-foot">
-        <button id="createAnimeBtn" class="btn btn-success">Create &amp; Notify Users 🔔</button>
+        <button id="createAnimeBtn" class="btn btn-success">
+          Create
+          <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" title="Users will be notified"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
         <button class="btn btn-ghost" data-close>Cancel</button>
       </div>
     </div>

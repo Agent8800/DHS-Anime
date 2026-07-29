@@ -581,3 +581,50 @@ label { display: block; font-size: 12.5px; color: var(--text-2); margin: 14px 0 
   .login-card { padding: 26px 20px; }
   .toast { width: calc(100% - 32px); text-align: center; }
 }
+
+/* ═══════════════════════════════════════════════════
+   SVG icon system — replaces all emojis
+   ═══════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.btn.icon-only { padding: 10px 12px; gap: 0; }
+.ic { flex-shrink: 0; }
+.ic-inline { vertical-align: -2px; margin-right: 5px; }
+
+/* Sidebar search with icon */
+.search-wrap { position: relative; }
+.search-wrap > svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}
+.search-wrap .search { padding-left: 36px; width: 100%; }
+
+.notify-note { display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+/* Sidebar anime poster fallback icon */
+.anime-poster { color: rgba(255, 255, 255, 0.85); }
+
+/* Placeholder cells with an icon above the text */
+.placeholder-ic { display: block; margin: 0 auto 10px; color: var(--text-3); opacity: 0.6; }
+
+/* Download count inline icon */
+.dl-count { display: inline-flex; align-items: center; gap: 4px; color: var(--text-2); font-size: 12.5px; }
+.dl-count .ic { color: var(--text-3); }
+
+/* Toast with icon */
+.toast { display: flex; align-items: center; gap: 8px; }
+.toast-ic { display: inline-flex; flex-shrink: 0; }
+.toast.success .toast-ic { color: var(--success); }
+.toast.error .toast-ic { color: var(--danger); }
+.toast.bell .toast-ic { color: var(--brand); }
+
+/* Stat cards: icons are coloured via inline style (currentColor) */
+.stat-card-icon { display: grid; place-items: center; }

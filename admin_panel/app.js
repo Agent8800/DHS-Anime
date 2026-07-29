@@ -37,6 +37,23 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+
+// ── SVG icon system (feather-style, stroke = currentColor) ───────
+const ICONS = {
+  film: '<rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  checkCircle: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  xCircle: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+  bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+};
+
+function icon(name, size = 16) {
+  return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
+}
 const LS_CFG = 'dhs_admin_cfg';
 const LS_DEMO = 'dhs_admin_demo_v1';
 
@@ -69,7 +86,8 @@ function parseSize(text) {
 let toastTimer = null;
 function toast(message, type = '') {
   const el = $('toast');
-  el.textContent = message;
+  const icName = { success: 'checkCircle', error: 'xCircle', bell: 'bell' }[type];
+  el.innerHTML = `${icName ? `<span class="toast-ic">${icon(icName, 15)}</span>` : ''}<span>${escapeHtml(message)}</span>`;
   el.className = `toast ${type}`;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
@@ -329,7 +347,7 @@ function renderAnimeList() {
 
   list.innerHTML = items.map(a => `
     <div class="anime-item ${a._id === state.selectedAnime ? 'active' : ''}" data-id="${a._id}">
-      <div class="anime-poster">🎬</div>
+      <div class="anime-poster">${icon('film', 18)}</div>
       <div class="anime-item-info">
         <strong>${escapeHtml(a.title || 'Untitled')}</strong>
         <span>${a.totalEpisodes ?? 0} eps · ${a.status || 'ongoing'}</span>
@@ -353,7 +371,7 @@ function renderEpisodes() {
   const rows = $('episodeRows');
 
   if (state.episodes.length === 0) {
-    rows.innerHTML = `<tr><td colspan="5" class="placeholder-cell">📭 No episodes yet — click “＋ Add Episode” (users get notified automatically)</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="5" class="placeholder-cell"><span class="placeholder-ic">${icon('inbox', 22)}</span>No episodes yet — click “Add Episode” (users get notified automatically)</td></tr>`;
   } else {
     rows.innerHTML = state.episodes.map(ep => {
       const links = (ep.downloadLinks || []).filter(l => l.isActive !== false);
@@ -365,9 +383,9 @@ function renderEpisodes() {
           <td><span class="ep-num">${ep.episodeNumber}</span></td>
           <td>${escapeHtml(ep.title || `Episode ${ep.episodeNumber}`)}</td>
           <td>${chips}</td>
-          <td><span class="dl-count">⬇ ${ep.downloadCount || 0}</span></td>
+          <td><span class="dl-count">${icon('download', 12)} ${ep.downloadCount || 0}</span></td>
           <td style="text-align:right">
-            <button class="btn btn-sm btn-primary" data-edit="${ep._id}">🔗 Manage Links</button>
+            <button class="btn btn-sm btn-primary" data-edit="${ep._id}">${icon('link', 13)} Manage Links</button>
           </td>
         </tr>`;
     }).join('');
@@ -402,7 +420,7 @@ function renderLinkList() {
             <input type="checkbox" data-active="${i}" ${link.isActive !== false ? 'checked' : ''} />
             <span class="slider"></span>
           </label>
-          <button class="btn btn-sm btn-danger" data-del="${i}" title="Remove">🗑</button>
+          <button class="btn btn-sm btn-danger" data-del="${i}" title="Remove">${icon('trash', 13)}</button>
         </div>
       </div>`;
   }).join('');
@@ -477,7 +495,7 @@ async function saveLinks() {
     ep.downloadLinks = [...state.draftLinks];
     closeModals();
     renderEpisodes();
-    toast(`✅ Episode ${ep.episodeNumber} links saved`, 'success');
+    toast(`Episode ${ep.episodeNumber} links saved`, 'success');
   } catch (err) {
     toast(`Save failed: ${err.message}`, 'error');
   }
@@ -507,7 +525,7 @@ async function createEpisode() {
     });
 
     closeModals();
-    toast(`🔔 Episode ${number} added — all users have been notified!`, 'bell');
+    toast(`Episode ${number} added — all users have been notified!`, 'bell');
     await selectAnime(animeId);
   } catch (err) {
     toast(`Create failed: ${err.message}`, 'error');
@@ -524,7 +542,7 @@ async function createAnime() {
     await backend.createAnime({ title, status: $('animeStatusSelect').value });
     closeModals();
     $('animeTitleInput').value = '';
-    toast('🔔 Donghua added — notification broadcast to all users!', 'bell');
+    toast('Donghua added — notification broadcast to all users!', 'bell');
     await refreshAnimeList();
   } catch (err) {
     toast(`Create failed: ${err.message}`, 'error');
@@ -645,7 +663,7 @@ async function generateCodes() {
       created = data.codes || [];
       await loadCodes();
     }
-    toast(`⚡ ${created.length} code${created.length > 1 ? 's' : ''} generated — share them with your users`, 'success');
+    toast(`${created.length} code${created.length > 1 ? 's' : ''} generated — share them with your users`, 'success');
   } catch (err) {
     toast(`Generate failed: ${err.message}`, 'error');
   }
@@ -676,7 +694,7 @@ async function deleteCode(id) {
 
 function copyCode(code) {
   navigator.clipboard?.writeText(code).then(
-    () => toast(`📋 ${code} copied`, 'success'),
+    () => toast(`${code} copied`, 'success'),
     () => toast('Copy failed — select the code manually', 'error'),
   );
 }
@@ -699,8 +717,8 @@ function renderCodes() {
       <td class="muted tiny">${created}</td>
       <td>
         <div class="code-actions">
-          <button class="icon-btn" data-copy="${escapeHtml(c.code)}" title="Copy code">📋</button>
-          ${c.isUsed ? '' : `<button class="icon-btn danger" data-delcode="${c._id}" title="Delete code">🗑</button>`}
+          <button class="icon-btn" data-copy="${escapeHtml(c.code)}" title="Copy code">${icon('copy', 13)}</button>
+          ${c.isUsed ? '' : `<button class="icon-btn danger" data-delcode="${c._id}" title="Delete code">${icon('trash', 13)}</button>`}
         </div>
       </td>
     </tr>`;
@@ -775,7 +793,7 @@ function bindEvents() {
     state.draftLinks.push(...parsed);
     $('pasteArea').value = '';
     renderLinkList();
-    toast(`🔗 ${parsed.length} link${parsed.length > 1 ? 's' : ''} detected & added`);
+    toast(`${parsed.length} link${parsed.length > 1 ? 's' : ''} detected & added`);
   });
 
   $('clearPasteBtn').addEventListener('click', () => { $('pasteArea').value = ''; });
